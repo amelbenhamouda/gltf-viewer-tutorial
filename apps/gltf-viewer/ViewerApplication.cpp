@@ -208,6 +208,8 @@ int ViewerApplication::run() {
     glm::vec3 lightDirection(1, 1, 1);
     glm::vec3 lightIntensity(1, 1, 1);
 
+    bool lightFromCamera = false;
+
     // TODO Creation of Buffer Objects
     const auto bufferObjects = createBufferObjects(model);
 
@@ -228,8 +230,13 @@ int ViewerApplication::run() {
 
         // Envoie lightIntensity au shader
         if (uLightDirectionLocation >= 0) {
-            const auto lightDirectionInViewSpace = glm::normalize(glm::vec3(viewMatrix * glm::vec4(lightDirection, 0.)));
-            glUniform3f(uLightDirectionLocation, lightDirectionInViewSpace[0], lightDirectionInViewSpace[1], lightDirectionInViewSpace[2]);
+            if (lightFromCamera) { // Si lumiere camera cocher
+                glUniform3f(uLightDirectionLocation, 0, 0, 1);
+            } 
+            else {
+                const auto lightDirectionInViewSpace = glm::normalize(glm::vec3(viewMatrix * glm::vec4(lightDirection, 0.)));
+                glUniform3f(uLightDirectionLocation, lightDirectionInViewSpace[0], lightDirectionInViewSpace[1], lightDirectionInViewSpace[2]);
+            }
         }
         if (uLightIntensity >= 0) {
             glUniform3f(uLightIntensity, lightIntensity[0], lightIntensity[1], lightIntensity[2]);
@@ -369,6 +376,9 @@ int ViewerApplication::run() {
                 if (ImGui::ColorEdit3("color", (float *)&lightColor) || ImGui::InputFloat("intensity", &lightIntensityFactor)) {
                     lightIntensity = lightColor * lightIntensityFactor;
                 }
+
+                // Ajout d'une boîte à cocher
+                ImGui::Checkbox("light from camera", &lightFromCamera);
             }
             //
             ImGui::End();
