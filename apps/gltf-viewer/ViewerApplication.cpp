@@ -170,6 +170,10 @@ int ViewerApplication::run() {
     const auto modelViewMatrixLocation = glGetUniformLocation(glslProgram.glId(), "uModelViewMatrix");
     const auto normalMatrixLocation = glGetUniformLocation(glslProgram.glId(), "uNormalMatrix");
 
+    // Récupérer les uniform du fragment shader
+    const auto uLightDirectionLocation = glGetUniformLocation(glslProgram.glId(), "uLightDirection");
+    const auto uLightIntensity = glGetUniformLocation(glslProgram.glId(), "uLightIntensity");
+
     tinygltf::Model model;
     // TODO Loading the glTF file
     if (!loadGltfFile(model)) {
@@ -180,8 +184,6 @@ int ViewerApplication::run() {
     computeSceneBounds(model, bboxMin, bboxMax);
 
     // // Build projection matrix
-    // auto maxDistance = 500.f; // TODO use scene bounds instead to compute this
-    // maxDistance = maxDistance > 0.f ? maxDistance : 100.f;
     const auto diag = bboxMax - bboxMin;
     auto maxDistance = glm::length(diag);
     const auto projMatrix = glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight, 0.001f * maxDistance, 1.5f * maxDistance);
@@ -192,7 +194,6 @@ int ViewerApplication::run() {
     // TrackballCameraController cameraController{ m_GLFWHandle.window(), 0.5f * maxDistance};
     std::unique_ptr<CameraController> cameraController = std::make_unique<TrackballCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
     if (m_hasUserCamera) {
-        // cameraController.setCamera(m_userCamera);
         cameraController->setCamera(m_userCamera);
     } 
     else {
@@ -200,10 +201,12 @@ int ViewerApplication::run() {
         const auto up = glm::vec3(0, 1, 0);
         const auto eye = diag.z > 0 ? center + diag : center + 2.f * glm::cross(diag, up);
         // TODO Use scene bounds to compute a better default camera
-        //cameraController.setCamera(Camera{ glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0) });
-        // cameraController.setCamera(Camera{eye, center, up});
         cameraController->setCamera(Camera{eye, center, up});
     }
+
+    // Initialisation light parameters
+    glm::vec3 lightDirection(1, 1, 1);
+    glm::vec3 lightIntensity(1, 1, 1);
 
     // TODO Creation of Buffer Objects
     const auto bufferObjects = createBufferObjects(model);
@@ -222,6 +225,15 @@ int ViewerApplication::run() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         const auto viewMatrix = camera.getViewMatrix();
+
+        // Envoie lightIntensity au shader
+        if (uLightDirectionLocation >= 0) {
+            const auto lightDirectionInViewSpace = glm::normalize(glm::vec3(viewMatrix * glm::vec4(lightDirection, 0.)));
+            glUniform3f(uLightDirectionLocation, lightDirectionInViewSpace[0], lightDirectionInViewSpace[1], lightDirectionInViewSpace[2]);
+        }
+        if (uLightIntensity >= 0) {
+            glUniform3f(uLightIntensity, lightIntensity[0], lightIntensity[1], lightIntensity[2]);
+        }
 
         // The recursive function that should draw a node
         // We use a std::function because a simple lambda cannot be recursive
