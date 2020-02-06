@@ -53,7 +53,6 @@ class Camera {
         void rollRight(float radians) {
             const auto front = m_center - m_eye;
             const auto rollMatrix = glm::rotate(glm::mat4(1), radians, front);
-
             m_up = glm::vec3(rollMatrix * glm::vec4(m_up, 0.f));
         }
 
@@ -61,7 +60,6 @@ class Camera {
             const auto front = m_center - m_eye;
             const auto left = cross(m_up, front);
             const auto tiltMatrix = glm::rotate(glm::mat4(1), radians, left);
-
             const auto newFront = glm::vec3(tiltMatrix * glm::vec4(front, 0.f));
             m_center = m_eye + newFront;
             m_up = glm::vec3(tiltMatrix * glm::vec4(m_up, 0.f));
@@ -70,7 +68,6 @@ class Camera {
         void panLeft(float radians) {
             const auto front = m_center - m_eye;
             const auto panMatrix = glm::rotate(glm::mat4(1), radians, m_up);
-
             const auto newFront = glm::vec3(panMatrix * glm::vec4(front, 0.f));
             m_center = m_eye + newFront;
         }
@@ -79,20 +76,13 @@ class Camera {
         void rotateLocal(float rollRight, float tiltDown, float panLeft) {
             const auto front = m_center - m_eye;
             const auto rollMatrix = glm::rotate(glm::mat4(1), rollRight, front);
-
             m_up = glm::vec3(rollMatrix * glm::vec4(m_up, 0.f));
-
             const auto left = cross(m_up, front);
-
             const auto tiltMatrix = glm::rotate(glm::mat4(1), tiltDown, left);
-
             const auto newFront = glm::vec3(tiltMatrix * glm::vec4(front, 0.f));
             m_center = m_eye + newFront;
-
             m_up = glm::vec3(tiltMatrix * glm::vec4(m_up, 0.f));
-
             const auto panMatrix = glm::rotate(glm::mat4(1), panLeft, m_up);
-
             const auto newNewFront = glm::vec3(panMatrix * glm::vec4(newFront, 0.f));
             m_center = m_eye + newNewFront;
         }
@@ -100,7 +90,6 @@ class Camera {
         // Rotate around a world axis but keep the same position
         void rotateWorld(float radians, const glm::vec3 &axis) {
             const auto rotationMatrix = glm::rotate(glm::mat4(1), radians, axis);
-
             const auto front = m_center - m_eye;
             const auto newFront = glm::vec3(rotationMatrix * glm::vec4(front, 0));
             m_center = m_eye + newFront;
@@ -130,7 +119,16 @@ class Camera {
         glm::vec3 m_up;
 };
 
-class FirstPersonCameraController {
+class CameraController {
+    public:
+        // Always add a virtual destructor to an interface
+        virtual ~CameraController() {}
+        virtual void setCamera(const Camera &camera) = 0;
+        virtual const Camera &getCamera() const = 0;
+        virtual bool update(float elapsedTime) = 0;
+};
+
+class FirstPersonCameraController : public CameraController {
     public:
         FirstPersonCameraController(GLFWwindow *window, float speed = 1.f, const glm::vec3 &worldUpAxis = glm::vec3(0, 1, 0)) :
         m_pWindow(window), m_fSpeed(speed), m_worldUpAxis(worldUpAxis), m_camera{glm::vec3(0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)} {}
@@ -147,9 +145,7 @@ class FirstPersonCameraController {
 
         const glm::vec3 &getWorldUpAxis() const { return m_worldUpAxis; }
 
-        void setWorldUpAxis(const glm::vec3 &worldUpAxis) {
-            m_worldUpAxis = worldUpAxis;
-        }
+        void setWorldUpAxis(const glm::vec3 &worldUpAxis) { m_worldUpAxis = worldUpAxis; }
 
         // Update the view matrix based on input events and elapsed time
         // Return true if the view matrix has been modified
@@ -174,35 +170,33 @@ class FirstPersonCameraController {
 };
 
 // todo Blender like camera
-class TrackballCameraController {
+class TrackballCameraController : public CameraController {
     public:
-    TrackballCameraController(GLFWwindow *window, float speed = 1.f, const glm::vec3 &worldUpAxis = glm::vec3(0, 1, 0)) :
-    m_pWindow(window), m_fSpeed(speed), m_worldUpAxis(worldUpAxis), m_camera{glm::vec3(0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)} {}
+        TrackballCameraController(GLFWwindow *window, float speed = 1.f, const glm::vec3 &worldUpAxis = glm::vec3(0, 1, 0)) :
+        m_pWindow(window), m_fSpeed(speed), m_worldUpAxis(worldUpAxis), m_camera{glm::vec3(0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)} {}
 
-    // Controller attributes, if put in a GUI, should be adapted
-    void setSpeed(float speed) { m_fSpeed = speed; }
+        // Controller attributes, if put in a GUI, should be adapted
+        void setSpeed(float speed) { m_fSpeed = speed; }
 
-    float getSpeed() const { return m_fSpeed; }
+        float getSpeed() const { return m_fSpeed; }
 
-    void increaseSpeed(float delta) {
-        m_fSpeed += delta;
-        m_fSpeed = glm::max(m_fSpeed, 0.f);
-    }
+        void increaseSpeed(float delta) {
+            m_fSpeed += delta;
+            m_fSpeed = glm::max(m_fSpeed, 0.f);
+        }
 
-    const glm::vec3 &getWorldUpAxis() const { return m_worldUpAxis; }
+        const glm::vec3 &getWorldUpAxis() const { return m_worldUpAxis; }
 
-    void setWorldUpAxis(const glm::vec3 &worldUpAxis) {
-        m_worldUpAxis = worldUpAxis;
-    }
+        void setWorldUpAxis(const glm::vec3 &worldUpAxis) { m_worldUpAxis = worldUpAxis; }
 
-    // Update the view matrix based on input events and elapsed time
-    // Return true if the view matrix has been modified
-    bool update(float elapsedTime);
+        // Update the view matrix based on input events and elapsed time
+        // Return true if the view matrix has been modified
+        bool update(float elapsedTime);
 
-    // Get the view matrix
-    const Camera &getCamera() const { return m_camera; }
+        // Get the view matrix
+        const Camera &getCamera() const { return m_camera; }
 
-    void setCamera(const Camera &camera) { m_camera = camera; }
+        void setCamera(const Camera &camera) { m_camera = camera; }
 
     private:
         GLFWwindow *m_pWindow = nullptr;

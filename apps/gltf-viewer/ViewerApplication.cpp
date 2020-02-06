@@ -189,9 +189,11 @@ int ViewerApplication::run() {
     // TODO Implement a new CameraController model and use it instead. Propose the
     // choice from the GUI
     // FirstPersonCameraController cameraController{ m_GLFWHandle.window(), 0.5f * maxDistance};
-    TrackballCameraController cameraController{ m_GLFWHandle.window(), 0.5f * maxDistance};
+    // TrackballCameraController cameraController{ m_GLFWHandle.window(), 0.5f * maxDistance};
+    std::unique_ptr<CameraController> cameraController = std::make_unique<TrackballCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
     if (m_hasUserCamera) {
-        cameraController.setCamera(m_userCamera);
+        // cameraController.setCamera(m_userCamera);
+        cameraController->setCamera(m_userCamera);
     } 
     else {
         const auto center = 0.5f * (bboxMax + bboxMin);
@@ -199,7 +201,8 @@ int ViewerApplication::run() {
         const auto eye = diag.z > 0 ? center + diag : center + 2.f * glm::cross(diag, up);
         // TODO Use scene bounds to compute a better default camera
         //cameraController.setCamera(Camera{ glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0) });
-        cameraController.setCamera(Camera{eye, center, up});
+        // cameraController.setCamera(Camera{eye, center, up});
+        cameraController->setCamera(Camera{eye, center, up});
     }
 
     // TODO Creation of Buffer Objects
@@ -282,7 +285,8 @@ int ViewerApplication::run() {
         const auto nbComponent = 3;
         std::vector<unsigned char> pixels(m_nWindowWidth * m_nWindowHeight * nbComponent);
         renderToImage(m_nWindowWidth, m_nWindowHeight, nbComponent, pixels.data(), [&]() {
-            drawScene(cameraController.getCamera());
+            // drawScene(cameraController.getCamera());
+            drawScene(cameraController->getCamera());
         });
         flipImageYAxis(m_nWindowWidth, m_nWindowHeight, nbComponent, pixels.data());
 
@@ -295,7 +299,8 @@ int ViewerApplication::run() {
     // Loop until the user closes the window
     for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount) {
         const auto seconds = glfwGetTime();
-        const auto camera = cameraController.getCamera();
+        // const auto camera = cameraController.getCamera();
+        const auto camera = cameraController->getCamera();
         drawScene(camera);
 
         // GUI code:
@@ -319,6 +324,20 @@ int ViewerApplication::run() {
                     const auto str = ss.str();
                     glfwSetClipboardString(m_GLFWHandle.window(), str.c_str());
                 }
+                // Ajout du bouton radio pour choisir le type de caméra
+                static int cameraControllerType = 0;
+                const auto cameraControllerTypeChanged = ImGui::RadioButton("Trackball", &cameraControllerType, 0) || ImGui::RadioButton("First Person", &cameraControllerType, 1);
+                if (cameraControllerTypeChanged) {
+                    const auto currentCamera = cameraController->getCamera();
+                    if (cameraControllerType == 0) { // Trackball
+                        cameraController = std::make_unique<TrackballCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
+                    } 
+                    else { // First Person
+                        cameraController = std::make_unique<FirstPersonCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
+                    }
+                    cameraController->setCamera(currentCamera);
+                }
+                // Fin ajout
             }
             ImGui::End();
         }
@@ -327,7 +346,8 @@ int ViewerApplication::run() {
         auto ellapsedTime = glfwGetTime() - seconds;
         auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
         if (!guiHasFocus) {
-            cameraController.update(float(ellapsedTime));
+            // cameraController.update(float(ellapsedTime));
+            cameraController->update(float(ellapsedTime));
         }
         m_GLFWHandle.swapBuffers(); // Swap front and back buffers
     }
