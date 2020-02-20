@@ -161,6 +161,45 @@ std::vector<GLuint> ViewerApplication::createVertexArrayObjects(const tinygltf::
     return vertexArrayObjects;
 }
 
+std::vector<GLuint> ViewerApplication::createTextureObjects(const tinygltf::Model &model) const {
+    std::vector<GLuint> textureObjects(model.textures.size(), 0);
+
+    tinygltf::Sampler defaultSampler;
+    defaultSampler.minFilter = GL_LINEAR;
+    defaultSampler.magFilter = GL_LINEAR;
+    defaultSampler.wrapS = GL_REPEAT;
+    defaultSampler.wrapT = GL_REPEAT;
+    defaultSampler.wrapR = GL_REPEAT;
+
+    glActiveTexture(GL_TEXTURE0);
+
+    glGenTextures(GLsizei(model.textures.size()), textureObjects.data());
+    for (int i = 0; i < model.textures.size(); i++) {
+        // Assume a texture object has been created and bound to GL_TEXTURE_2D
+        const auto &texture = model.textures[i]; // get i-th texture
+        assert(texture.source >= 0); // ensure a source image is present
+        const auto &image = model.images[texture.source]; // get the image
+
+        glBindTexture(GL_TEXTURE_2D, textureObjects[i]);
+        // fill the texture object with the data from the image
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, image.pixel_type, image.image.data());
+
+        const auto &sampler = texture.sampler >= 0 ? model.samplers[texture.sampler] : defaultSampler;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sampler.minFilter != -1 ? sampler.minFilter : GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sampler.magFilter != -1 ? sampler.magFilter : GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sampler.wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, sampler.wrapR);
+
+        if (sampler.minFilter == GL_NEAREST_MIPMAP_NEAREST || sampler.minFilter == GL_NEAREST_MIPMAP_LINEAR || 
+            sampler.minFilter == GL_LINEAR_MIPMAP_NEAREST || sampler.minFilter == GL_LINEAR_MIPMAP_LINEAR) {
+           glGenerateMipmap(GL_TEXTURE_2D);
+        }
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return textureObjects;
+}
+
 int ViewerApplication::run() {
     // Loader shaders
     const auto glslProgram = compileProgram({ m_ShadersRootPath / m_AppName / m_vertexShader,
@@ -209,6 +248,22 @@ int ViewerApplication::run() {
     glm::vec3 lightIntensity(1, 1, 1);
 
     bool lightFromCamera = false;
+
+    // TODO Creation of Texture Objects
+    const auto textureObjects = createTextureObjects(model);
+    GLuint whiteTexture = 0;
+
+    // Create white texture for object with no base color texture
+    glGenTextures(1, &whiteTexture);
+    glBindTexture(GL_TEXTURE_2D, whiteTexture);
+    float white[] = {1, 1, 1, 1};
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_FLOAT, white);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     // TODO Creation of Buffer Objects
     const auto bufferObjects = createBufferObjects(model);
