@@ -213,6 +213,7 @@ int ViewerApplication::run() {
     const auto uLightDirectionLocation = glGetUniformLocation(glslProgram.glId(), "uLightDirection");
     const auto uLightIntensity = glGetUniformLocation(glslProgram.glId(), "uLightIntensity");
     const auto uBaseColorTexture = glGetUniformLocation(glslProgram.glId(), "uBaseColorTexture");
+    const auto uBaseColorFactor = glGetUniformLocation(glslProgram.glId(), "uBaseColorFactor");
 
     tinygltf::Model model;
     // TODO Loading the glTF file
@@ -297,12 +298,25 @@ int ViewerApplication::run() {
                 glBindTexture(GL_TEXTURE_2D, textureObject);
                 glUniform1i(uBaseColorTexture, 0);
             }
+
+            if (uBaseColorFactor >= 0) {
+                glUniform4f(uBaseColorFactor,
+                    (float)pbrMetallicRoughness.baseColorFactor[0],
+                    (float)pbrMetallicRoughness.baseColorFactor[1],
+                    (float)pbrMetallicRoughness.baseColorFactor[2],
+                    (float)pbrMetallicRoughness.baseColorFactor[3]);
+            }
         }
         else {
             // Apply default material
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, whiteTexture);
-            glUniform1i(uBaseColorTexture, 0);
+            if (uBaseColorFactor >= 0) {
+                glUniform4f(uBaseColorFactor, 1, 1, 1, 1);
+            }
+            if (uBaseColorTexture >= 0) {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, whiteTexture);
+                glUniform1i(uBaseColorTexture, 0);
+            }
         }
     };
 

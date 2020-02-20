@@ -6,6 +6,8 @@ in vec2 vTexCoords;
 uniform vec3 uLightDirection;
 uniform vec3 uLightIntensity;
 
+uniform vec4 uBaseColorFactor;
+
 uniform sampler2D uBaseColorTexture;
 
 out vec3 fColor;
@@ -37,8 +39,12 @@ void main() {
 	vec3 L = uLightDirection;
 
 	vec4 baseColorFromTexture = SRGBtoLINEAR(texture(uBaseColorTexture, vTexCoords));
-	float NdotL = clamp(dot(N, L), 0, 1);
-	vec3 diffuse = baseColorFromTexture.rgb * M_1_PI * NdotL;
+	
+	vec4 baseColor = uBaseColorFactor * baseColorFromTexture;
 
-	fColor = LINEARtoSRGB(diffuse);
+	float NdotL = clamp(dot(N, L), 0, 1);
+	// vec3 diffuse = baseColorFromTexture.rgb * M_1_PI * NdotL;
+	vec3 diffuse = baseColor.rgb * M_1_PI * NdotL;
+
+	fColor = LINEARtoSRGB(diffuse * uLightIntensity);
 }
