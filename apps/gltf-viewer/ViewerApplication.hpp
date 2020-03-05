@@ -50,6 +50,7 @@ class ViewerApplication {
         const std::string m_ImGuiIniFilename;
         // Last to be initialized, first to be destroyed:
         GLFWHandle m_GLFWHandle { int(m_nWindowWidth), int(m_nWindowHeight), "glTF Viewer", m_OutputPath.empty() }; // show the window only if m_OutputPath is empty
+        
         /*
         ! THE ORDER OF DECLARATION OF MEMBER VARIABLES IS IMPORTANT !
         - m_ImGuiIniFilename.c_str() will be used by ImGUI in ImGui::Shutdown, which
