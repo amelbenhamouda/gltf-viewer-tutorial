@@ -91,5 +91,5 @@ void main() {
 	vec3 f_diffuse = (1 - F) * diffuse;
 
 	// fColor = LINEARtoSRGB(diffuse * uLightIntensity);
-	fColor = LINEARtoSRGB((f_diffuse + f_specular) * uLightIntensity * NdotL) + emissive;
+	fColor = LINEARtoSRGB((f_diffuse + f_specular) * uLightIntensity * NdotL + emissive);
 }
