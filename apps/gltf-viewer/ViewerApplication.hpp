@@ -51,6 +51,8 @@ class ViewerApplication {
         // Last to be initialized, first to be destroyed:
         GLFWHandle m_GLFWHandle { int(m_nWindowWidth), int(m_nWindowHeight), "glTF Viewer", m_OutputPath.empty() }; // show the window only if m_OutputPath is empty
         
+        void computeTangentBasis(std::vector<glm::vec3> & vertices, std::vector<glm::vec2> & uvs,  std::vector<glm::vec3> & normals, 
+                                 std::vector<glm::vec3> & tangents, std::vector<glm::vec3> & bitangents);
         /*
         ! THE ORDER OF DECLARATION OF MEMBER VARIABLES IS IMPORTANT !
         - m_ImGuiIniFilename.c_str() will be used by ImGUI in ImGui::Shutdown, which
