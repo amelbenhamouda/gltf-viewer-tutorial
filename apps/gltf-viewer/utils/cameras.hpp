@@ -131,7 +131,8 @@ class CameraController {
 class FirstPersonCameraController : public CameraController {
     public:
         FirstPersonCameraController(GLFWwindow *window, float speed = 1.f, const glm::vec3 &worldUpAxis = glm::vec3(0, 1, 0)) :
-        m_pWindow(window), m_fSpeed(speed), m_worldUpAxis(worldUpAxis), m_camera{glm::vec3(0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)} {}
+        m_pWindow(window), m_fSpeed(speed), m_worldUpAxis(worldUpAxis), m_camera{glm::vec3(0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)},
+        default_speed(speed) {}
 
         // Controller attributes, if put in a GUI, should be adapted
         void setSpeed(float speed) { m_fSpeed = speed; }
@@ -167,6 +168,7 @@ class FirstPersonCameraController : public CameraController {
 
         // Current camera
         Camera m_camera;
+        float default_speed = 0.f;
 };
 
 // todo Blender like camera

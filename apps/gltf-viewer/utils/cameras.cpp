@@ -25,7 +25,7 @@ bool FirstPersonCameraController::update(float elapsedTime) {
     if (glfwGetMouseButton(m_pWindow, GLFW_MOUSE_BUTTON_LEFT) && !m_LeftButtonPressed) {
         m_LeftButtonPressed = true;
         glfwGetCursorPos(m_pWindow, &m_LastCursorPosition.x, &m_LastCursorPosition.y);
-    } 
+    }
     else if (!glfwGetMouseButton(m_pWindow, GLFW_MOUSE_BUTTON_LEFT) && m_LeftButtonPressed) {
         m_LeftButtonPressed = false;
     }
@@ -45,6 +45,16 @@ bool FirstPersonCameraController::update(float elapsedTime) {
     float pedestalUp = 0.f;
     float dollyIn = 0.f;
     float rollRightAngle = 0.f;
+
+
+ // add speed up with Ctrl
+  if (glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL)) {
+    increaseSpeed(m_fSpeed*4.f);
+  } else {
+    m_fSpeed = default_speed;
+  }
+
+
 
     if (glfwGetKey(m_pWindow, GLFW_KEY_W)) {
         dollyIn += m_fSpeed * elapsedTime;
@@ -81,6 +91,7 @@ bool FirstPersonCameraController::update(float elapsedTime) {
     if (glfwGetKey(m_pWindow, GLFW_KEY_E)) {
         rollRightAngle += 0.001f;
     }
+    m_fSpeed = default_speed;
 
     // cursor going right, so minus because we want pan left angle:
     const float panLeftAngle = -0.01f * float(cursorDelta.x);
@@ -94,17 +105,18 @@ bool FirstPersonCameraController::update(float elapsedTime) {
     m_camera.moveLocal(truckLeft, pedestalUp, dollyIn);
     m_camera.rotateLocal(rollRightAngle, tiltDownAngle, 0.f);
     m_camera.rotateWorld(panLeftAngle, m_worldUpAxis);
+    //remetre la vitesse par default
 
     return true;
 }
 
-bool TrackballCameraController::update(float elapsedTime) { 
+bool TrackballCameraController::update(float elapsedTime) {
     // Le bouton du milieu au lieu du bouton gauche de la souris
     // De GLFW_MOUSE_BUTTON_LEFT à GLFW_MOUSE_BUTTON_MIDDLE
     if (glfwGetMouseButton(m_pWindow, GLFW_MOUSE_BUTTON_MIDDLE) && !m_MiddleButtonPressed) {
         m_MiddleButtonPressed = true;
         glfwGetCursorPos(m_pWindow, &m_LastCursorPosition.x, &m_LastCursorPosition.y);
-    } 
+    }
     else if (!glfwGetMouseButton(m_pWindow, GLFW_MOUSE_BUTTON_MIDDLE) && m_MiddleButtonPressed) {
         m_MiddleButtonPressed = false;
     }

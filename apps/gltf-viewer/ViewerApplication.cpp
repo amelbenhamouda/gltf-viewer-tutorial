@@ -3,6 +3,7 @@
 #include <iostream>
 #include <numeric>
 
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -14,6 +15,8 @@
 
 #include <stb_image_write.h>
 #include <tiny_gltf.h>
+
+#include "Cube.hpp"
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
@@ -191,7 +194,7 @@ std::vector<GLuint> ViewerApplication::createTextureObjects(const tinygltf::Mode
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, sampler.wrapR);
 
-        if (sampler.minFilter == GL_NEAREST_MIPMAP_NEAREST || sampler.minFilter == GL_NEAREST_MIPMAP_LINEAR || 
+        if (sampler.minFilter == GL_NEAREST_MIPMAP_NEAREST || sampler.minFilter == GL_NEAREST_MIPMAP_LINEAR ||
             sampler.minFilter == GL_LINEAR_MIPMAP_NEAREST || sampler.minFilter == GL_LINEAR_MIPMAP_LINEAR) {
            glGenerateMipmap(GL_TEXTURE_2D);
         }
@@ -200,15 +203,60 @@ std::vector<GLuint> ViewerApplication::createTextureObjects(const tinygltf::Mode
     return textureObjects;
 }
 
+
+GLuint initVbocube(GLsizei count_vertex,const std::vector<glimac::ShapeVertex> &vertices){
+    /// Bind VBO for Cube
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    // Binding d'un VBO sur la cible GL_ARRAY_BUFFER:
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof( glimac::ShapeVertex), vertices.data(), GL_STATIC_DRAW); // Envoi des données
+    //Après avoir modifié le VBO, on le débind de la cible pour éviter de le remodifier par erreur
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // debind
+    return vbo;
+
+
+}
+
+GLuint initVaocube(const GLuint &vbo){
+    /// Bind VAO for Cube
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    const GLuint VERTEX_ATTRIB_POSITION_IDX = 0;
+    const GLuint VERTEX_ATTRIB_NORMAL_IDX = 1;
+    const GLuint VERTEX_ATTRIB_TEXCOORD0_IDX = 2;
+    glEnableVertexAttribArray(VERTEX_ATTRIB_POSITION_IDX);
+    glEnableVertexAttribArray(VERTEX_ATTRIB_NORMAL_IDX); //1
+    glEnableVertexAttribArray(VERTEX_ATTRIB_TEXCOORD0_IDX); //2
+    glVertexAttribPointer(VERTEX_ATTRIB_POSITION_IDX, 3, GL_FLOAT, GL_FALSE, sizeof( glimac::ShapeVertex), (const GLvoid*)(offsetof( glimac::ShapeVertex, position)));
+    glVertexAttribPointer(VERTEX_ATTRIB_NORMAL_IDX, 3, GL_FLOAT, GL_FALSE, sizeof( glimac::ShapeVertex), (const GLvoid*)(offsetof( glimac::ShapeVertex, normal)));
+    glVertexAttribPointer(VERTEX_ATTRIB_TEXCOORD0_IDX, 2, GL_FLOAT, GL_FALSE, sizeof( glimac::ShapeVertex), (const GLvoid*)(offsetof( glimac::ShapeVertex, texCoords)));
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+	/// Fin bind Vao Cube
+	return vao;
+}
+
+void setVec3(const GLProgram &prog,const std::string &name,const glm::vec3 &vec)
+{
+    glUniform3f(glGetUniformLocation(prog.glId(), name.c_str()), vec[0], vec[1], vec[2]);
+}
+void setFloat(const GLProgram &prog,const std::string &name, float value)
+{
+    glUniform1f(glGetUniformLocation(prog.glId(), name.c_str()), value);
+}
+
 int ViewerApplication::run() {
     // Loader shaders
     const auto glslProgram = compileProgram({ m_ShadersRootPath / m_AppName / m_vertexShader,
                                               m_ShadersRootPath / m_AppName / m_fragmentShader });
-
     const auto modelViewProjMatrixLocation = glGetUniformLocation(glslProgram.glId(), "uModelViewProjMatrix");
     const auto modelViewMatrixLocation = glGetUniformLocation(glslProgram.glId(), "uModelViewMatrix");
     const auto normalMatrixLocation = glGetUniformLocation(glslProgram.glId(), "uNormalMatrix");
-
     // Récupérer les uniform du fragment shader
     const auto uLightDirectionLocation = glGetUniformLocation(glslProgram.glId(), "uLightDirection");
     const auto uLightIntensity = glGetUniformLocation(glslProgram.glId(), "uLightIntensity");
@@ -219,6 +267,20 @@ int ViewerApplication::run() {
     const auto uRoughnessFactor = glGetUniformLocation(glslProgram.glId(), "uRoughnessFactor");
     const auto uEmissiveTexture = glGetUniformLocation(glslProgram.glId(), "uEmissiveTexture");
     const auto uEmissiveFactor = glGetUniformLocation(glslProgram.glId(), "uEmissiveFactor");
+    /*const auto uLightPosition = glGetUniformLocation(glslProgram.glId(), "uLightPosition");
+    const auto uCubeIntensity = glGetUniformLocation(glslProgram.glId(), "uCubeIntensity");*/
+
+    const auto glslCube = compileProgram({ m_ShadersRootPath / m_AppName / m_vertexShader_cube,
+                                          m_ShadersRootPath / m_AppName / m_fragmentShader_cube });
+    const auto uSize_cube = glGetUniformLocation(glslCube.glId(), "uSize_cube");
+    const auto uVMatrix = glGetUniformLocation(glslCube.glId(), "uVMatrix");
+    const auto uPosCube = glGetUniformLocation(glslCube.glId(), "uPosCube");
+    const auto uPMatrix = glGetUniformLocation(glslCube.glId(), "uPMatrix");
+    const auto uColor = glGetUniformLocation(glslCube.glId(), "uColor");
+    /*const auto uCubeDist = glGetUniformLocation(glslCube.glId(), "uCubeDist");*/
+    /*std::cout << "glslCube uniform: " << uSize_cube << " " << uVMatrix << " "
+              <<uPosCube << " " << uPMatrix << " " <<uColor << " " << std::endl;*/
+
 
     tinygltf::Model model;
     // TODO Loading the glTF file
@@ -226,13 +288,35 @@ int ViewerApplication::run() {
         return -1;
     }
 
+    ///init Cube
+
+    glimac::Cube cube(1);
+    GLsizei count_vertex = cube.getVertexCount();
+    const  glimac::ShapeVertex*  Datapointeur = cube.getDataPointer();
+    std::vector<glimac::ShapeVertex> vertices;
+    for (auto i = 0; i < count_vertex; i++) { // Cube
+        vertices.push_back(*Datapointeur);
+        ///rencentre le cube en (0,0,0)
+        vertices[i].position[0] -= 0.5;
+        vertices[i].position[1] -= 0.5;
+        vertices[i].position[1] -= 0.5;
+        //std::cout << (*Datapointeur).position << std::endl;
+        Datapointeur++;
+    }
+    GLuint vbocube = initVbocube(count_vertex,vertices);
+    GLuint vaocube = initVaocube(vbocube);
+   //std::cout <<  vaocube << std::endl;
+    ///
+
     glm::vec3 bboxMin, bboxMax;
     computeSceneBounds(model, bboxMin, bboxMax);
-
+    std::vector <glm::vec3> posCube = {bboxMax,bboxMin,glm::vec3(bboxMax[0],bboxMin[1],bboxMax[2]),glm::vec3(bboxMin[0],bboxMax[1],bboxMax[2]) };
+    float dist = glm::distance(bboxMax,bboxMin);
+    float sizeCube[] = {dist*0.2f,dist*0.1f,dist*0.05f,dist*0.02f};
     // // Build projection matrix
     const auto diag = bboxMax - bboxMin;
     auto maxDistance = glm::length(diag);
-    const auto projMatrix = glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight, 0.001f * maxDistance, 1.5f * maxDistance);
+    auto projMatrix = glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight, 0.001f * maxDistance, 1000.0f/*1.5f * maxDistance*/);
 
     // TODO Implement a new CameraController model and use it instead. Propose the
     // choice from the GUI
@@ -241,7 +325,7 @@ int ViewerApplication::run() {
     std::unique_ptr<CameraController> cameraController = std::make_unique<TrackballCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
     if (m_hasUserCamera) {
         cameraController->setCamera(m_userCamera);
-    } 
+    }
     else {
         const auto center = 0.5f * (bboxMax + bboxMin);
         const auto up = glm::vec3(0, 1, 0);
@@ -253,7 +337,10 @@ int ViewerApplication::run() {
     // Initialisation light parameters
     glm::vec3 lightDirection(1, 1, 1);
     glm::vec3 lightIntensity(1, 1, 1);
-
+    glm::vec3 CubeIntensity[] = {glm::vec3(1, 1, 1),glm::vec3(1, 0, 0),glm::vec3(1, 0.5, 0),glm::vec3(0.5, 0.9, 0.3)};
+    std::vector <glm::vec3> CubeColor = {glm::vec3(1, 1, 1),glm::vec3(1, 0, 0),glm::vec3(1, 0.5, 0),glm::vec3(0.5, 0.9, 0.3)};
+    float CubeDist[] = {33.f,21.f,14.f,8.f};
+    const unsigned int NbCube = 4;
     bool lightFromCamera = false;
 
     // TODO Creation of Texture Objects
@@ -389,13 +476,16 @@ int ViewerApplication::run() {
         glViewport(0, 0, m_nWindowWidth, m_nWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+
         const auto viewMatrix = camera.getViewMatrix();
+
 
         // Envoie lightIntensity au shader
         if (uLightDirectionLocation >= 0) {
             if (lightFromCamera) { // Si lumiere camera cocher
                 glUniform3f(uLightDirectionLocation, 0, 0, 1);
-            } 
+            }
             else {
                 const auto lightDirectionInViewSpace = glm::normalize(glm::vec3(viewMatrix * glm::vec4(lightDirection, 0.)));
                 glUniform3f(uLightDirectionLocation, lightDirectionInViewSpace[0], lightDirectionInViewSpace[1], lightDirectionInViewSpace[2]);
@@ -404,6 +494,45 @@ int ViewerApplication::run() {
         if (uLightIntensity >= 0) {
             glUniform3f(uLightIntensity, lightIntensity[0], lightIntensity[1], lightIntensity[2]);
         }
+
+        ///drawCube
+
+        /*if (uCubeIntensity >= 0) {
+            glUniform3f(uCubeIntensity, CubeIntensity[0], CubeIntensity[1], CubeIntensity[2]);
+        }
+        if (uLightPosition >= 0) {
+            glUniform3fv(uLightPosition, 1, glm::value_ptr(posCube));
+        }*/
+        glslProgram.use();
+        setVec3(glslProgram,"pointLights[0].LightPosition",posCube[0]);
+        setVec3(glslProgram,"pointLights[0].CubeIntensity",CubeIntensity[0]);
+        setFloat(glslProgram,"pointLights[0].CubeDist",CubeDist[0]);
+        setVec3(glslProgram,"pointLights[1].LightPosition",posCube[1]);
+        setVec3(glslProgram,"pointLights[1].CubeIntensity",CubeIntensity[1]);
+        setFloat(glslProgram,"pointLights[1].CubeDist",CubeDist[1]);
+        setVec3(glslProgram,"pointLights[2].LightPosition",posCube[2]);
+        setVec3(glslProgram,"pointLights[2].CubeIntensity",CubeIntensity[2]);
+        setFloat(glslProgram,"pointLights[2].CubeDist",CubeDist[2]);
+        setVec3(glslProgram,"pointLights[3].LightPosition",posCube[3]);
+        setVec3(glslProgram,"pointLights[3].CubeIntensity",CubeIntensity[3]);
+        setFloat(glslProgram,"pointLights[3].CubeDist",CubeDist[3]);
+
+        glslCube.use();
+        glBindVertexArray(vaocube);
+
+        glUniformMatrix4fv(uVMatrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        glUniformMatrix4fv(uPMatrix, 1, GL_FALSE, glm::value_ptr(projMatrix));
+        for(unsigned int i =0 ; i<NbCube ; i++){
+            glUniform3fv(uPosCube, 1, glm::value_ptr(posCube[i]));
+            glUniform3fv(uColor, 1, glm::value_ptr(CubeColor[i]));
+            glUniform1f(uSize_cube,sizeCube[i] );
+            glDrawArrays(GL_TRIANGLES, 0, count_vertex);
+        }
+        glBindVertexArray(0);
+
+
+
+
 
         // The recursive function that should draw a node
         // We use a std::function because a simple lambda cannot be recursive
@@ -442,7 +571,7 @@ int ViewerApplication::run() {
                         const auto &bufferView = model.bufferViews[accessor.bufferView];
                         const auto byteOffset = accessor.byteOffset + bufferView.byteOffset;
                         glDrawElements(primitive.mode, GLsizei(accessor.count), accessor.componentType, (const GLvoid *)byteOffset);
-                    } 
+                    }
                     else { // Take first accessor to get the count
                         const auto accessorIdx = (*begin(primitive.attributes)).second;
                         const auto &accessor = model.accessors[accessorIdx];
@@ -451,14 +580,15 @@ int ViewerApplication::run() {
                 }
             }
             // Draw children
+
             for (auto nodeChild : node.children) {
                 drawNode(nodeChild, modelMatrix);
             }
         };
-
         // Draw the scene referenced by gltf file
+        glslProgram.use();
         if (model.defaultScene >= 0) {
-            // TODO Draw all nodes
+        // TODO Draw all nodes
             for (const auto nodeIdx : model.scenes[model.defaultScene].nodes) {
                 drawNode(nodeIdx, glm::mat4(1));
             }
@@ -466,6 +596,10 @@ int ViewerApplication::run() {
     };
 
     //TODO Render to image
+
+
+
+
     if (!(m_OutputPath.empty())) {
         const auto nbComponent = 3;
         std::vector<unsigned char> pixels(m_nWindowWidth * m_nWindowHeight * nbComponent);
@@ -480,9 +614,13 @@ int ViewerApplication::run() {
 
         return 0;
     }
-
+    int currentcam = 0;
     // Loop until the user closes the window
     for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount) {
+
+        glfwGetFramebufferSize(m_GLFWHandle.window(), &m_nWindowWidth, &m_nWindowHeight);
+        projMatrix = glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight, 0.001f * maxDistance, 1000.0f/*1.5f * maxDistance*/);
+
         const auto seconds = glfwGetTime();
         // const auto camera = cameraController.getCamera();
         const auto camera = cameraController->getCamera();
@@ -513,15 +651,28 @@ int ViewerApplication::run() {
                 static int cameraControllerType = 0;
                 const auto cameraControllerTypeChanged = ImGui::RadioButton("Trackball", &cameraControllerType, 0) || ImGui::RadioButton("First Person", &cameraControllerType, 1);
                 if (cameraControllerTypeChanged) {
-                    const auto currentCamera = cameraController->getCamera();
+
                     if (cameraControllerType == 0) { // Trackball
                         cameraController = std::make_unique<TrackballCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
-                    } 
-                    else { // First Person
-                        cameraController = std::make_unique<FirstPersonCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
+                        const auto center = 0.5f * (bboxMax + bboxMin);
+                        const auto up = glm::vec3(0, 1, 0);
+                        const auto eye = diag.z > 0 ? center + diag : center + 2.f * glm::cross(diag, up);
+                        // TODO Use scene bounds to compute a better default camera
+                        cameraController->setCamera(Camera{eye, center, up});
+                        currentcam = 0;
                     }
-                    cameraController->setCamera(currentCamera);
+                    else { // First Person
+                        const auto currentCamera = cameraController->getCamera();
+                        cameraController = std::make_unique<FirstPersonCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
+                        cameraController->setCamera(currentCamera);
+                        currentcam = 1;
+                    }
                 }
+            }
+            if (currentcam == 0) {
+              ImGui::Text("Current cam : Trackball");
+            } else if (currentcam == 1) {
+              ImGui::Text("Current cam : FPS");
             }
             //
             if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -536,12 +687,50 @@ int ViewerApplication::run() {
                     lightDirection = glm::vec3(sinTheta * cosPhi, cosTheta, sinTheta * sinPhi);
                 }
 
-                static glm::vec3 lightColor(1.f, 1.f, 1.f);
-                static float lightIntensityFactor = 1.f;
+                static glm::vec3 lightColor(1, 1, 1);
+                static std::vector<glm::vec3> CubeNewColor= CubeColor;
+                static std::vector<glm::vec3>  CubePose = posCube;
+                static float lightIntensityFactor;
+                static std::vector<float> LigthCubeIntensity(NbCube,1.f);
+                static float maxIntensity = 50.0f;
+                static float cubeposefactor = 20;
+
 
                 if (ImGui::ColorEdit3("color", (float *)&lightColor) || ImGui::InputFloat("intensity", &lightIntensityFactor)) {
                     lightIntensity = lightColor * lightIntensityFactor;
                 }
+                if (ImGui::SliderFloat("intensity_slider", &lightIntensityFactor,0, maxIntensity)) {
+                    lightIntensity = lightColor * lightIntensityFactor;
+                }
+                ImGui::Text("Cube: ");
+                static int cubetochange = 0;
+                ImGui::TextColored(ImVec4(1,1,0,1), "Choose Cube");
+                //ImGui::BeginChild("");
+                for (int i = 0; i < NbCube; i++){
+                        std::string s = std::to_string(i+1);
+                        char strcube[10] = "cube n°";
+                        //char const *pchar =
+                        strcat_s(strcube,sizeof strcube, s.c_str());
+                        ImGui::RadioButton(strcube , &cubetochange, i);
+                }
+                //ImGui::EndChild();
+
+                if (ImGui::ColorEdit3("Color cube", (float *)&CubeNewColor[cubetochange]) ) {
+                    CubeIntensity[cubetochange] = CubeNewColor[cubetochange] * LigthCubeIntensity[cubetochange];
+                    CubeColor[cubetochange] = CubeNewColor[cubetochange]*glm::vec3(LigthCubeIntensity[cubetochange]/(maxIntensity*0.5f));
+                    //std::cout << CubeNewColor << std::endl;
+                }
+                if ( ImGui::SliderFloat("Cube intensity", &LigthCubeIntensity[cubetochange],0, maxIntensity)) {
+                    CubeIntensity[cubetochange] = CubeNewColor[cubetochange] * LigthCubeIntensity[cubetochange];
+                    CubeColor[cubetochange] =  CubeNewColor[cubetochange] *glm::vec3(LigthCubeIntensity[cubetochange]/(maxIntensity*0.5f));
+                }
+                if (ImGui::SliderFloat("X_pos", &CubePose[cubetochange][0], cubeposefactor*bboxMin[0], cubeposefactor*bboxMax[0] ) || ImGui::SliderFloat("Y_pos", &CubePose[cubetochange][1], cubeposefactor*bboxMin[1], cubeposefactor*bboxMax[1])
+                                        || ImGui::SliderFloat("Z_pos", &CubePose[cubetochange][2], cubeposefactor*bboxMin[2], cubeposefactor*bboxMax[2])) {
+                                            posCube[cubetochange] = CubePose[cubetochange];
+                                            posCube[cubetochange][2] = -CubePose[cubetochange][2];
+                }
+
+
 
                 // Ajout d'une boîte à cocher
                 ImGui::Checkbox("light from camera", &lightFromCamera);
@@ -565,9 +754,9 @@ int ViewerApplication::run() {
 }
 
 ViewerApplication::ViewerApplication(const fs::path &appPath, uint32_t width, uint32_t height, const fs::path &gltfFile,
-                                     const std::vector<float> &lookatArgs, const std::string &vertexShader, const std::string &fragmentShader, 
-                                     const fs::path &output) : m_nWindowWidth(width), m_nWindowHeight(height), m_AppPath{appPath}, 
-                                     m_AppName{m_AppPath.stem().string()}, m_ImGuiIniFilename{m_AppName + ".imgui.ini"}, 
+                                     const std::vector<float> &lookatArgs, const std::string &vertexShader, const std::string &fragmentShader,
+                                     const fs::path &output) : m_nWindowWidth(width), m_nWindowHeight(height), m_AppPath{appPath},
+                                     m_AppName{m_AppPath.stem().string()}, m_ImGuiIniFilename{m_AppName + ".imgui.ini"},
                                      m_ShadersRootPath{m_AppPath.parent_path() / "shaders"}, m_gltfFilePath{gltfFile}, m_OutputPath{output} {
     if (!lookatArgs.empty()) {
         m_hasUserCamera = true;
