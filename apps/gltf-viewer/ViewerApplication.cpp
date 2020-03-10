@@ -335,13 +335,20 @@ int ViewerApplication::run() {
     }
 
     // Initialisation light parameters
+    bool lightFromCamera = false;
+    ///directional
     glm::vec3 lightDirection(1, 1, 1);
     glm::vec3 lightIntensity(1, 1, 1);
+    ///Ponctual
     glm::vec3 CubeIntensity[] = {glm::vec3(1, 1, 1),glm::vec3(1, 0, 0),glm::vec3(1, 0.5, 0),glm::vec3(0.5, 0.9, 0.3)};
     std::vector <glm::vec3> CubeColor = {glm::vec3(1, 1, 1),glm::vec3(1, 0, 0),glm::vec3(1, 0.5, 0),glm::vec3(0.5, 0.9, 0.3)};
     float CubeDist[] = {33.f,21.f,14.f,8.f};
     const unsigned int NbCube = 4;
-    bool lightFromCamera = false;
+    /// Spotlight
+    glm::vec3 spotligthIntensity(1,0.91,0);
+    float spotligthCutOff = 12.5f;
+    float spotligthOuterCutOff = 17.5f;
+    float spotligthtDistAttenuation = 32;
 
     // TODO Creation of Texture Objects
     const auto textureObjects = createTextureObjects(model);
@@ -517,6 +524,16 @@ int ViewerApplication::run() {
         setVec3(glslProgram,"pointLights[3].CubeIntensity",CubeIntensity[3]);
         setFloat(glslProgram,"pointLights[3].CubeDist",CubeDist[3]);
 
+        auto camPos = glm::vec3(0,0,0);
+        //std::cout << camPos << std::endl;
+        auto spotLigthDirection = glm::vec3(0,0,-1);
+        setVec3(glslProgram,"spotligth.LightPosition",camPos);
+        setVec3(glslProgram,"spotligth.LightIntensity",spotligthIntensity);
+        setVec3(glslProgram,"spotligth.LightDirection",spotLigthDirection);
+        setFloat(glslProgram,"spotligth.CutOff",glm::cos(glm::radians(spotligthCutOff)));
+        setFloat(glslProgram,"spotligth.OuterCutOff",glm::cos(glm::radians(spotligthOuterCutOff)));
+        setFloat(glslProgram,"spotligth.DistAttenuation",spotligthtDistAttenuation);
+
         glslCube.use();
         glBindVertexArray(vaocube);
 
@@ -678,7 +695,7 @@ int ViewerApplication::run() {
             if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
                 static float lightTheta = 0.f;
                 static float lightPhi = 0.f;
-
+                ImGui::TextColored(ImVec4(1,1,0,1), "Directional Ligth");
                 if (ImGui::SliderFloat("theta", &lightTheta, 0, glm::pi<float>()) || ImGui::SliderFloat("phi", &lightPhi, 0, 2.f * glm::pi<float>())) {
                     const auto sinPhi = glm::sin(lightPhi);
                     const auto cosPhi = glm::cos(lightPhi);
@@ -692,17 +709,19 @@ int ViewerApplication::run() {
                 static std::vector<glm::vec3>  CubePose = posCube;
                 static float lightIntensityFactor;
                 static std::vector<float> LigthCubeIntensity(NbCube,1.f);
-                static float maxIntensity = 50.0f;
+                static float maxIntensity = 100.0f;
                 static float cubeposefactor = 20;
 
 
-                if (ImGui::ColorEdit3("color", (float *)&lightColor) || ImGui::InputFloat("intensity", &lightIntensityFactor)) {
+                if (ImGui::ColorEdit3("Color Directional ligth", (float *)&lightColor) || ImGui::InputFloat("Intensity Directional ligth", &lightIntensityFactor)) {
                     lightIntensity = lightColor * lightIntensityFactor;
                 }
-                if (ImGui::SliderFloat("intensity_slider", &lightIntensityFactor,0, maxIntensity)) {
+                if (ImGui::SliderFloat("intensity Directional ligth slider", &lightIntensityFactor,0, maxIntensity)) {
                     lightIntensity = lightColor * lightIntensityFactor;
                 }
-                ImGui::Text("Cube: ");
+                // Ajout d'une boîte à cocher
+                ImGui::Checkbox("light from camera", &lightFromCamera);
+                ImGui::TextColored(ImVec4(1,1,0,1), "Cube");
                 static int cubetochange = 0;
                 ImGui::TextColored(ImVec4(1,1,0,1), "Choose Cube");
                 //ImGui::BeginChild("");
@@ -730,10 +749,47 @@ int ViewerApplication::run() {
                                             posCube[cubetochange][2] = -CubePose[cubetochange][2];
                 }
 
+                ImGui::TextColored(ImVec4(1,1,0,1), "Spotligth");
+
+                static float NewspotligthCutOff = spotligthCutOff;
+                static float NewspotligthOuterCutOff = spotligthOuterCutOff;
+                static float BothCutoffandOuter = spotligthCutOff;
+                static float NewspotligthtDistAttenuation = spotligthtDistAttenuation;
+
+                static glm::vec3 spotlightColor = spotligthIntensity;
+                static float SpotlightIntensityFactor;
+                if (ImGui::ColorEdit3("Color SpotLight", (float *)&spotlightColor) || ImGui::SliderFloat("Intensity spotligth", &SpotlightIntensityFactor,0, maxIntensity)) {
+                    spotligthIntensity = spotlightColor * SpotlightIntensityFactor;
+                }
+                if (ImGui::SliderFloat("Dist CuteOff", &NewspotligthCutOff,0.f, 180.f)) {
+                    spotligthCutOff = NewspotligthCutOff;
+                }
+                if (ImGui::SliderFloat("Dist OuterCuteOff", &NewspotligthOuterCutOff,0.f, 180.f)) {
+                    spotligthOuterCutOff = NewspotligthOuterCutOff;
+                }
+                if (ImGui::SliderFloat("Both CuteOff & Outer", &BothCutoffandOuter,0.f, 180.f)) {
+                    spotligthCutOff = BothCutoffandOuter;
+                    spotligthOuterCutOff = BothCutoffandOuter*1.1f;
+                    NewspotligthCutOff = spotligthCutOff;
+                    NewspotligthOuterCutOff = spotligthOuterCutOff;
+                }
+                if (ImGui::SliderFloat("Dist attenuation spotligth", &NewspotligthtDistAttenuation,0, 150)) {
+                    spotligthtDistAttenuation = NewspotligthtDistAttenuation;
+                }
+                ImGui::TextColored(ImVec4(1,1,0,1), "Switch Off all");
+                if(ImGui::Button("Off")){
+                    glm::vec3 off(0,0,0);
+                    spotligthIntensity = off;
+                    for(auto i=  0;i<NbCube ; i++){
+                        CubeIntensity[i] = off;
+                        CubeColor[i] = off;
+                    }
+                    lightIntensity = off;
+                };
 
 
-                // Ajout d'une boîte à cocher
-                ImGui::Checkbox("light from camera", &lightFromCamera);
+
+
             }
             //
             ImGui::End();
