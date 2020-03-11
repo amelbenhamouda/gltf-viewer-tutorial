@@ -204,7 +204,7 @@ std::vector<GLuint> ViewerApplication::createTextureObjects(const tinygltf::Mode
 }
 
 
-GLuint initVbocube(GLsizei count_vertex,const std::vector<glimac::ShapeVertex> &vertices){
+GLuint ViewerApplication::initVbocube(GLsizei count_vertex,const std::vector<glimac::ShapeVertex> &vertices){
     /// Bind VBO for Cube
     GLuint vbo;
     glGenBuffers(1, &vbo);
@@ -219,7 +219,7 @@ GLuint initVbocube(GLsizei count_vertex,const std::vector<glimac::ShapeVertex> &
 
 }
 
-GLuint initVaocube(const GLuint &vbo){
+GLuint ViewerApplication::initVaocube(const GLuint &vbo){
     /// Bind VAO for Cube
     GLuint vao;
     glGenVertexArrays(1, &vao);
@@ -241,11 +241,11 @@ GLuint initVaocube(const GLuint &vbo){
 	return vao;
 }
 
-void setVec3(const GLProgram &prog,const std::string &name,const glm::vec3 &vec)
+void ViewerApplication::setVec3(const GLProgram &prog,const std::string &name,const glm::vec3 &vec)
 {
     glUniform3f(glGetUniformLocation(prog.glId(), name.c_str()), vec[0], vec[1], vec[2]);
 }
-void setFloat(const GLProgram &prog,const std::string &name, float value)
+void ViewerApplication::setFloat(const GLProgram &prog,const std::string &name, float value)
 {
     glUniform1f(glGetUniformLocation(prog.glId(), name.c_str()), value);
 }
@@ -346,13 +346,16 @@ int ViewerApplication::run() {
     const unsigned int NbCube = 4;
     /// Spotlight
     glm::vec3 spotligthIntensity(1,0.91,0);
-    float spotligthCutOff = 12.5f;
-    float spotligthOuterCutOff = 17.5f;
+    float spotligthCutOff = 8.5f;
+    float spotligthOuterCutOff = 10.5f;
     float spotligthtDistAttenuation = 32;
+    bool SpotlightfromCursor = false;
 
     // TODO Creation of Texture Objects
     const auto textureObjects = createTextureObjects(model);
     GLuint whiteTexture = 0;
+
+
 
     // Create white texture for object with no base color texture
     glGenTextures(1, &whiteTexture);
@@ -479,6 +482,8 @@ int ViewerApplication::run() {
     };
 
     // Lambda function to draw the scene
+
+
     const auto drawScene = [&](const Camera &camera) {
         glViewport(0, 0, m_nWindowWidth, m_nWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -511,22 +516,24 @@ int ViewerApplication::run() {
             glUniform3fv(uLightPosition, 1, glm::value_ptr(posCube));
         }*/
         glslProgram.use();
-        setVec3(glslProgram,"pointLights[0].LightPosition",posCube[0]);
-        setVec3(glslProgram,"pointLights[0].CubeIntensity",CubeIntensity[0]);
-        setFloat(glslProgram,"pointLights[0].CubeDist",CubeDist[0]);
-        setVec3(glslProgram,"pointLights[1].LightPosition",posCube[1]);
-        setVec3(glslProgram,"pointLights[1].CubeIntensity",CubeIntensity[1]);
-        setFloat(glslProgram,"pointLights[1].CubeDist",CubeDist[1]);
-        setVec3(glslProgram,"pointLights[2].LightPosition",posCube[2]);
-        setVec3(glslProgram,"pointLights[2].CubeIntensity",CubeIntensity[2]);
-        setFloat(glslProgram,"pointLights[2].CubeDist",CubeDist[2]);
-        setVec3(glslProgram,"pointLights[3].LightPosition",posCube[3]);
-        setVec3(glslProgram,"pointLights[3].CubeIntensity",CubeIntensity[3]);
-        setFloat(glslProgram,"pointLights[3].CubeDist",CubeDist[3]);
+        for(unsigned int i = 0;i<NbCube; i++){
+            std::string num = std::to_string(i);
+            setVec3(glslProgram,("pointLights["+num+"].LightPosition").c_str(),glm::vec3(viewMatrix*glm::vec4(posCube[i],1)));
+            setVec3(glslProgram,("pointLights["+num+"].CubeIntensity").c_str(),CubeIntensity[i]);
+            setFloat(glslProgram,("pointLights["+num+"].CubeDist").c_str(),CubeDist[i]);
+        }
+
 
         auto camPos = glm::vec3(0,0,0);
-        //std::cout << camPos << std::endl;
-        auto spotLigthDirection = glm::vec3(0,0,-1);
+        //std::cout << (xpos-m_nWindowWidth/2)/m_nWindowWidth << " " << (ypos-m_nWindowHeight/2)/m_nWindowHeight << std::endl;
+        glm::vec3 spotLigthDirection;
+        if(SpotlightfromCursor){
+            double xpos,ypos;
+            glfwGetCursorPos(m_GLFWHandle.window(), &xpos, &ypos);
+            spotLigthDirection = glm::vec3(float((xpos-m_nWindowWidth/2)/m_nWindowWidth),float(-(ypos-m_nWindowHeight/2)/m_nWindowHeight),-1);
+        } else {
+            spotLigthDirection = glm::vec3(0,0,-1);
+        }
         setVec3(glslProgram,"spotligth.LightPosition",camPos);
         setVec3(glslProgram,"spotligth.LightIntensity",spotligthIntensity);
         setVec3(glslProgram,"spotligth.LightDirection",spotLigthDirection);
@@ -632,7 +639,8 @@ int ViewerApplication::run() {
         return 0;
     }
     int currentcam = 0;
-    // Loop until the user closes the window
+
+    /// Loop until the user closes the window
     for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount) {
 
         glfwGetFramebufferSize(m_GLFWHandle.window(), &m_nWindowWidth, &m_nWindowHeight);
@@ -741,12 +749,11 @@ int ViewerApplication::run() {
                 }
                 if ( ImGui::SliderFloat("Cube intensity", &LigthCubeIntensity[cubetochange],0, maxIntensity)) {
                     CubeIntensity[cubetochange] = CubeNewColor[cubetochange] * LigthCubeIntensity[cubetochange];
-                    CubeColor[cubetochange] =  CubeNewColor[cubetochange] *glm::vec3(LigthCubeIntensity[cubetochange]/(maxIntensity*0.5f));
+                    CubeColor[cubetochange] =  CubeNewColor[cubetochange] *glm::vec3(LigthCubeIntensity[cubetochange]/(maxIntensity*0.2f));
                 }
-                if (ImGui::SliderFloat("X_pos", &CubePose[cubetochange][0], cubeposefactor*bboxMin[0], cubeposefactor*bboxMax[0] ) || ImGui::SliderFloat("Y_pos", &CubePose[cubetochange][1], cubeposefactor*bboxMin[1], cubeposefactor*bboxMax[1])
-                                        || ImGui::SliderFloat("Z_pos", &CubePose[cubetochange][2], cubeposefactor*bboxMin[2], cubeposefactor*bboxMax[2])) {
+                if (ImGui::SliderFloat("X_pos", &CubePose[cubetochange][0], -cubeposefactor*bboxMax[0], cubeposefactor*bboxMax[0] ) || ImGui::SliderFloat("Y_pos", &CubePose[cubetochange][1], -cubeposefactor*bboxMax[1], cubeposefactor*bboxMax[1])
+                                        || ImGui::SliderFloat("Z_pos", &CubePose[cubetochange][2], -cubeposefactor*bboxMax[2], cubeposefactor*bboxMax[2])) {
                                             posCube[cubetochange] = CubePose[cubetochange];
-                                            posCube[cubetochange][2] = -CubePose[cubetochange][2];
                 }
 
                 ImGui::TextColored(ImVec4(1,1,0,1), "Spotligth");
@@ -755,7 +762,6 @@ int ViewerApplication::run() {
                 static float NewspotligthOuterCutOff = spotligthOuterCutOff;
                 static float BothCutoffandOuter = spotligthCutOff;
                 static float NewspotligthtDistAttenuation = spotligthtDistAttenuation;
-
                 static glm::vec3 spotlightColor = spotligthIntensity;
                 static float SpotlightIntensityFactor;
                 if (ImGui::ColorEdit3("Color SpotLight", (float *)&spotlightColor) || ImGui::SliderFloat("Intensity spotligth", &SpotlightIntensityFactor,0, maxIntensity)) {
@@ -776,6 +782,11 @@ int ViewerApplication::run() {
                 if (ImGui::SliderFloat("Dist attenuation spotligth", &NewspotligthtDistAttenuation,0, 150)) {
                     spotligthtDistAttenuation = NewspotligthtDistAttenuation;
                 }
+
+                if(ImGui::Button("Spot light from Cursor / centered Spot light")){
+                        SpotlightfromCursor = !SpotlightfromCursor;
+                }
+
                 ImGui::TextColored(ImVec4(1,1,0,1), "Switch Off all");
                 if(ImGui::Button("Off")){
                     glm::vec3 off(0,0,0);
@@ -805,6 +816,11 @@ int ViewerApplication::run() {
         m_GLFWHandle.swapBuffers(); // Swap front and back buffers
     }
     // TODO clean up allocated GL data
+    glDeleteBuffers(1, &vbocube);
+    glDeleteVertexArrays(1, &vaocube);
+    for(auto &it : textureObjects){glDeleteTextures(1,&it);}
+    for(auto &it : bufferObjects){glDeleteBuffers(1,&it);}
+    for(auto &it : vertexArrayObjects){glDeleteVertexArrays(1,&it);}
 
     return 0;
 }

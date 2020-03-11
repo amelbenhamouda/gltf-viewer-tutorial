@@ -4,6 +4,7 @@
 #include "utils/cameras.hpp"
 #include "utils/filesystem.hpp"
 #include "utils/shaders.hpp"
+#include "Cube.hpp"
 
 #include <tiny_gltf.h> // TODO Loading the glTF file
 
@@ -27,6 +28,10 @@ class ViewerApplication {
         std::vector<GLuint> createBufferObjects(const tinygltf::Model &model);
         std::vector<GLuint> createVertexArrayObjects(const tinygltf::Model &model, const std::vector<GLuint> &bufferObjects, std::vector<VaoRange> &meshToVertexArrays);
         std::vector<GLuint> createTextureObjects(const tinygltf::Model &model) const;
+        GLuint initVbocube(GLsizei count_vertex,const std::vector<glimac::ShapeVertex> &vertices);
+        GLuint initVaocube(const GLuint &vbo);
+        void setVec3(const GLProgram &prog,const std::string &name,const glm::vec3 &vec);
+        void setFloat(const GLProgram &prog,const std::string &name, float value);
 
         GLsizei m_nWindowWidth = 1280;
         GLsizei m_nWindowHeight = 720;

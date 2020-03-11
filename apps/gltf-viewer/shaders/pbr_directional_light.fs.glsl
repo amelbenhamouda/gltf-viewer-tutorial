@@ -1,10 +1,8 @@
 #version 330
 
 in vec3 vViewSpacePosition;
-in vec3 vVPosition;
 in vec3 vViewSpaceNormal;
 in vec2 vTexCoords;
-
 
 uniform vec3 uLightDirection;
 uniform vec3 uLightIntensity;
@@ -143,7 +141,7 @@ vec3 ponctual(PoncLigth ligth){
 	vec3 f_specular = F * Vis * D;
 	vec3 diffuse = c_diff * M_1_PI;
 	vec3 f_diffuse = (1 - F) * diffuse;
-	float dist = length(ligth.LightPosition-vViewSpacePosition);
+	float dist = distance(ligth.LightPosition,vViewSpacePosition);
 	float Kc = 1.f ,Kl,Kd;
 	if(ligth.CubeDist < 7 &&  ligth.CubeDist>=0){       Kl = 0.7f;  Kd = 1.8f;}
     else if(ligth.CubeDist < 13 && ligth.CubeDist>=7){  Kl = 0.35f; Kd = 0.44f;}
@@ -219,8 +217,6 @@ void main() {
 	for(int i=0; i<NB_PONC_LIGHTS; i++){
         result += ponctual(pointLights[i]);
 	}
-
-
     //float theta = dot(lightDir, normalize(-light.direction));
     //float epsilon = light.cutOff - light.outerCutOff;
     //float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
