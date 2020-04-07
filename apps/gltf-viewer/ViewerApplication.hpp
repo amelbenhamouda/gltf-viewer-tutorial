@@ -4,6 +4,7 @@
 #include "utils/cameras.hpp"
 #include "utils/filesystem.hpp"
 #include "utils/shaders.hpp"
+#include "Cube.hpp"
 
 #include <tiny_gltf.h> // TODO Loading the glTF file
 
@@ -27,6 +28,10 @@ class ViewerApplication {
         std::vector<GLuint> createBufferObjects(const tinygltf::Model &model);
         std::vector<GLuint> createVertexArrayObjects(const tinygltf::Model &model, const std::vector<GLuint> &bufferObjects, std::vector<VaoRange> &meshToVertexArrays);
         std::vector<GLuint> createTextureObjects(const tinygltf::Model &model) const;
+        GLuint initVbocube(GLsizei count_vertex,const std::vector<glimac::ShapeVertex> &vertices);
+        GLuint initVaocube(const GLuint &vbo);
+        void setVec3(const GLProgram &prog,const std::string &name,const glm::vec3 &vec);
+        void setFloat(const GLProgram &prog,const std::string &name, float value);
 
         GLsizei m_nWindowWidth = 1280;
         GLsizei m_nWindowHeight = 720;
@@ -37,9 +42,9 @@ class ViewerApplication {
 
         fs::path m_gltfFilePath;
         std::string m_vertexShader = "forward.vs.glsl";
-        // std::string m_fragmentShader = "normals.fs.glsl";
-        // std::string m_fragmentShader = "diffuse_directional_light.fs.glsl";
+        std::string m_vertexShader_cube = "shad3Dcube.vs.glsl";
         std::string m_fragmentShader = "pbr_directional_light.fs.glsl";
+        std::string m_fragmentShader_cube = "shad3Dcube.fs.glsl";
 
         bool m_hasUserCamera = false;
         Camera m_userCamera;
@@ -50,9 +55,6 @@ class ViewerApplication {
         const std::string m_ImGuiIniFilename;
         // Last to be initialized, first to be destroyed:
         GLFWHandle m_GLFWHandle { int(m_nWindowWidth), int(m_nWindowHeight), "glTF Viewer", m_OutputPath.empty() }; // show the window only if m_OutputPath is empty
-        
-        void computeTangentBasis(std::vector<glm::vec3> & vertices, std::vector<glm::vec2> & uvs,  std::vector<glm::vec3> & normals, 
-                                 std::vector<glm::vec3> & tangents, std::vector<glm::vec3> & bitangents);
         /*
         ! THE ORDER OF DECLARATION OF MEMBER VARIABLES IS IMPORTANT !
         - m_ImGuiIniFilename.c_str() will be used by ImGUI in ImGui::Shutdown, which
