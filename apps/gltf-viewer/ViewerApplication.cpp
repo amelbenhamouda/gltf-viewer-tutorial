@@ -676,28 +676,27 @@ int ViewerApplication::run() {
                 static std::vector<glm::vec3> CubeNewColor= CubeColor;
                 static std::vector<glm::vec3>  CubePose = posCube;
                 static float lightIntensityFactor;
-                static std::vector<float> LigthCubeIntensity(NbCube,1.f);
+                static std::vector<float> LigthCubeIntensity(NbCube, 1.f);
                 static float maxIntensity = 100.0f;
                 static float cubeposefactor = 20;
 
-                if (ImGui::ColorEdit3("Color Directional ligth", (float *)&lightColor) || ImGui::InputFloat("Intensity Directional ligth", &lightIntensityFactor)) {
-                    lightIntensity = lightColor * lightIntensityFactor;
-                }
-                if (ImGui::SliderFloat("intensity Directional ligth slider", &lightIntensityFactor,0, maxIntensity)) {
+                // if (ImGui::ColorEdit3("Color Directional ligth", (float *)&lightColor) || ImGui::InputFloat("Intensity Directional ligth", &lightIntensityFactor)) {
+                //     lightIntensity = lightColor * lightIntensityFactor;
+                // }
+                if (ImGui::SliderFloat("Intensity", &lightIntensityFactor,0, maxIntensity)) {
                     lightIntensity = lightColor * lightIntensityFactor;
                 }
                 // Ajout d'une boîte à cocher
-                ImGui::Checkbox("light from camera", &lightFromCamera);
-                ImGui::TextColored(ImVec4(1,1,0,1), "Cube");
+                ImGui::Checkbox("Light from camera", &lightFromCamera);
+                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Cube");
                 static int cubetochange = 0;
-                ImGui::TextColored(ImVec4(1,1,0,1), "Choose Cube");
+                ImGui::TextColored(ImVec4(1, 1, 1, 1), "Choose Cube : ");
                 for (int i = 0; i < NbCube; i++) {
-                        std::string s = std::to_string(i+1);
-                        char strcube[10] = "cube n°";
-                        #ifdef __STDC_LIB_EXT1__
-                            strcat_s(strcube, sizeof strcube, s.c_str());
-                            ImGui::RadioButton(strcube, &cubetochange, i);
-                        #endif
+                    std::string s = std::to_string(i+1);
+                    char strcube[10] = "cube n°";
+                    //strcat_s(strcube, sizeof strcube, s.c_str());
+                    strcat(strcube, s.c_str());
+                    ImGui::RadioButton(strcube, &cubetochange, i);
                 }
 
                 if (ImGui::ColorEdit3("Color cube", (float *)&CubeNewColor[cubetochange])) {
@@ -712,6 +711,9 @@ int ViewerApplication::run() {
                                         || ImGui::SliderFloat("Z_pos", &CubePose[cubetochange][2], -cubeposefactor*bboxMax[2], cubeposefactor*bboxMax[2])) {
                     posCube[cubetochange] = CubePose[cubetochange];
                 }
+
+                glm::vec3 precCubeIntensity[NbCube] = CubeIntensity;
+    			std::vector <glm::vec3> precCubeColor = CubeColor;
 
                 ImGui::TextColored(ImVec4(1, 1, 0, 1), "Spotligth");
 
@@ -744,8 +746,14 @@ int ViewerApplication::run() {
                     SpotlightfromCursor = !SpotlightfromCursor;
                 }
 
-                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Switch Off all");
-                if (ImGui::Button("Off")) {
+                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Switch Off/On all : ");
+                static glm::vec3 precSpotligthIntensity = spotligthIntensity;
+                ImGui::SameLine();
+                auto buttonOff = ImGui::Button("Off");
+                ImGui::SameLine();
+                auto buttonOn = ImGui::Button("On");
+                
+                if (buttonOff) {
                     glm::vec3 off(0, 0, 0);
                     spotligthIntensity = off;
                     for (auto i = 0; i < NbCube; i++) {
@@ -753,7 +761,15 @@ int ViewerApplication::run() {
                         CubeColor[i] = off;
                     }
                     lightIntensity = off;
-                };
+                }
+                else if (buttonOn){
+                    for (auto i = 0; i < NbCube; i++) {
+                        CubeIntensity[i] = precCubeIntensity[i];
+                        CubeColor[i] = precCubeColor[i];
+                    }
+                    lightIntensity = precSpotligthIntensity;
+                    SpotlightfromCursor = !SpotlightfromCursor;
+                }
             }
             ImGui::End();
         }
