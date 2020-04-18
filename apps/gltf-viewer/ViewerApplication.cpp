@@ -3,7 +3,6 @@
 #include <iostream>
 #include <numeric>
 
-
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -26,7 +25,6 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
 bool ViewerApplication::loadGltfFile(tinygltf::Model &model) { // TODO Loading the glTF file
     std::clog << "Loading file " << m_gltfFilePath << std::endl;
-
     tinygltf::TinyGLTF loader;
     std::string err;
     std::string warn;
@@ -215,8 +213,6 @@ GLuint ViewerApplication::initVbocube(GLsizei count_vertex,const std::vector<gli
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); // debind
     return vbo;
-
-
 }
 
 GLuint ViewerApplication::initVaocube(const GLuint &vbo){
@@ -241,12 +237,11 @@ GLuint ViewerApplication::initVaocube(const GLuint &vbo){
 	return vao;
 }
 
-void ViewerApplication::setVec3(const GLProgram &prog,const std::string &name,const glm::vec3 &vec)
-{
+void ViewerApplication::setVec3(const GLProgram &prog,const std::string &name,const glm::vec3 &vec) {
     glUniform3f(glGetUniformLocation(prog.glId(), name.c_str()), vec[0], vec[1], vec[2]);
 }
-void ViewerApplication::setFloat(const GLProgram &prog,const std::string &name, float value)
-{
+
+void ViewerApplication::setFloat(const GLProgram &prog,const std::string &name, float value) {
     glUniform1f(glGetUniformLocation(prog.glId(), name.c_str()), value);
 }
 
@@ -267,8 +262,6 @@ int ViewerApplication::run() {
     const auto uRoughnessFactor = glGetUniformLocation(glslProgram.glId(), "uRoughnessFactor");
     const auto uEmissiveTexture = glGetUniformLocation(glslProgram.glId(), "uEmissiveTexture");
     const auto uEmissiveFactor = glGetUniformLocation(glslProgram.glId(), "uEmissiveFactor");
-    /*const auto uLightPosition = glGetUniformLocation(glslProgram.glId(), "uLightPosition");
-    const auto uCubeIntensity = glGetUniformLocation(glslProgram.glId(), "uCubeIntensity");*/
 
     const auto glslCube = compileProgram({ m_ShadersRootPath / m_AppName / m_vertexShader_cube,
                                           m_ShadersRootPath / m_AppName / m_fragmentShader_cube });
@@ -277,10 +270,6 @@ int ViewerApplication::run() {
     const auto uPosCube = glGetUniformLocation(glslCube.glId(), "uPosCube");
     const auto uPMatrix = glGetUniformLocation(glslCube.glId(), "uPMatrix");
     const auto uColor = glGetUniformLocation(glslCube.glId(), "uColor");
-    /*const auto uCubeDist = glGetUniformLocation(glslCube.glId(), "uCubeDist");*/
-    /*std::cout << "glslCube uniform: " << uSize_cube << " " << uVMatrix << " "
-              <<uPosCube << " " << uPMatrix << " " <<uColor << " " << std::endl;*/
-
 
     tinygltf::Model model;
     // TODO Loading the glTF file
@@ -289,7 +278,6 @@ int ViewerApplication::run() {
     }
 
     ///init Cube
-
     glimac::Cube cube(1);
     GLsizei count_vertex = cube.getVertexCount();
     const  glimac::ShapeVertex*  Datapointeur = cube.getDataPointer();
@@ -300,28 +288,23 @@ int ViewerApplication::run() {
         vertices[i].position[0] -= 0.5;
         vertices[i].position[1] -= 0.5;
         vertices[i].position[1] -= 0.5;
-        //std::cout << (*Datapointeur).position << std::endl;
         Datapointeur++;
     }
     GLuint vbocube = initVbocube(count_vertex,vertices);
     GLuint vaocube = initVaocube(vbocube);
-   //std::cout <<  vaocube << std::endl;
-    ///
 
     glm::vec3 bboxMin, bboxMax;
     computeSceneBounds(model, bboxMin, bboxMax);
-    std::vector <glm::vec3> posCube = {bboxMax,bboxMin,glm::vec3(bboxMax[0],bboxMin[1],bboxMax[2]),glm::vec3(bboxMin[0],bboxMax[1],bboxMax[2]) };
-    float dist = glm::distance(bboxMax,bboxMin);
-    float sizeCube[] = {dist*0.2f,dist*0.1f,dist*0.05f,dist*0.02f};
+    std::vector <glm::vec3> posCube = {bboxMax, bboxMin, glm::vec3(bboxMax[0], bboxMin[1], bboxMax[2]), glm::vec3(bboxMin[0], bboxMax[1], bboxMax[2])};
+    float dist = glm::distance(bboxMax, bboxMin);
+    float sizeCube[] = {dist * 0.2f, dist * 0.1f, dist * 0.05f, dist * 0.02f};
     // // Build projection matrix
     const auto diag = bboxMax - bboxMin;
     auto maxDistance = glm::length(diag);
-    auto projMatrix = glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight, 0.001f * maxDistance, 1000.0f/*1.5f * maxDistance*/);
+    auto projMatrix = glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight, 0.001f * maxDistance, 1000.0f);
 
     // TODO Implement a new CameraController model and use it instead. Propose the
     // choice from the GUI
-    // FirstPersonCameraController cameraController{ m_GLFWHandle.window(), 0.5f * maxDistance};
-    // TrackballCameraController cameraController{ m_GLFWHandle.window(), 0.5f * maxDistance};
     std::unique_ptr<CameraController> cameraController = std::make_unique<TrackballCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
     if (m_hasUserCamera) {
         cameraController->setCamera(m_userCamera);
@@ -339,23 +322,31 @@ int ViewerApplication::run() {
     ///directional
     glm::vec3 lightDirection(1, 1, 1);
     glm::vec3 lightIntensity(1, 1, 1);
+    glm::vec3 prelightIntensity = lightIntensity;
     ///Ponctual
-    glm::vec3 CubeIntensity[] = {glm::vec3(1, 1, 1),glm::vec3(1, 0, 0),glm::vec3(1, 0.5, 0),glm::vec3(0.5, 0.9, 0.3)};
-    std::vector <glm::vec3> CubeColor = {glm::vec3(1, 1, 1),glm::vec3(1, 0, 0),glm::vec3(1, 0.5, 0),glm::vec3(0.5, 0.9, 0.3)};
-    float CubeDist[] = {33.f,21.f,14.f,8.f};
-    const unsigned int NbCube = 4;
+	const unsigned int NbCube = 4;
+    glm::vec3 CubeIntensity[] = {glm::vec3(1, 1, 1), glm::vec3(1, 0, 0), glm::vec3(1, 0.5, 0), glm::vec3(0.5, 0.9, 0.3)};
+	glm::vec3 precCubeIntensity[NbCube];
+	for(unsigned int i = 0; i<NbCube;i++){
+		precCubeIntensity[i] = CubeIntensity[i];
+	}
+
+
+    std::vector <glm::vec3> CubeColor = {glm::vec3(1, 1, 1), glm::vec3(1, 0, 0), glm::vec3(1, 0.5, 0), glm::vec3(0.5, 0.9, 0.3)};
+	std::vector <glm::vec3> preCubeColor = CubeColor;
+    float CubeDist[] = {33.f, 21.f, 14.f, 8.f};
+
     /// Spotlight
-    glm::vec3 spotligthIntensity(1,0.91,0);
+    glm::vec3 spotligthIntensity(1, 0.91, 0);
     float spotligthCutOff = 8.5f;
     float spotligthOuterCutOff = 10.5f;
     float spotligthtDistAttenuation = 32;
     bool SpotlightfromCursor = false;
+    glm::vec3 precSpotligthIntensity = spotligthIntensity;
 
     // TODO Creation of Texture Objects
     const auto textureObjects = createTextureObjects(model);
     GLuint whiteTexture = 0;
-
-
 
     // Create white texture for object with no base color texture
     glGenTextures(1, &whiteTexture);
@@ -482,16 +473,11 @@ int ViewerApplication::run() {
     };
 
     // Lambda function to draw the scene
-
-
     const auto drawScene = [&](const Camera &camera) {
         glViewport(0, 0, m_nWindowWidth, m_nWindowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-
         const auto viewMatrix = camera.getViewMatrix();
-
 
         // Envoie lightIntensity au shader
         if (uLightDirectionLocation >= 0) {
@@ -508,55 +494,43 @@ int ViewerApplication::run() {
         }
 
         ///drawCube
-
-        /*if (uCubeIntensity >= 0) {
-            glUniform3f(uCubeIntensity, CubeIntensity[0], CubeIntensity[1], CubeIntensity[2]);
-        }
-        if (uLightPosition >= 0) {
-            glUniform3fv(uLightPosition, 1, glm::value_ptr(posCube));
-        }*/
         glslProgram.use();
-        for(unsigned int i = 0;i<NbCube; i++){
+        for (unsigned int i = 0; i < NbCube; i++) {
             std::string num = std::to_string(i);
-            setVec3(glslProgram,("pointLights["+num+"].LightPosition").c_str(),glm::vec3(viewMatrix*glm::vec4(posCube[i],1)));
-            setVec3(glslProgram,("pointLights["+num+"].CubeIntensity").c_str(),CubeIntensity[i]);
-            setFloat(glslProgram,("pointLights["+num+"].CubeDist").c_str(),CubeDist[i]);
+            setVec3(glslProgram, ("pointLights[" + num + "].LightPosition").c_str(), glm::vec3(viewMatrix * glm::vec4(posCube[i], 1)));
+            setVec3(glslProgram, ("pointLights[" + num + "].CubeIntensity").c_str(), CubeIntensity[i]);
+            setFloat(glslProgram, ("pointLights[" + num + "].CubeDist").c_str(), CubeDist[i]);
         }
 
-
-        auto camPos = glm::vec3(0,0,0);
-        //std::cout << (xpos-m_nWindowWidth/2)/m_nWindowWidth << " " << (ypos-m_nWindowHeight/2)/m_nWindowHeight << std::endl;
+        auto camPos = glm::vec3(0, 0, 0);
         glm::vec3 spotLigthDirection;
-        if(SpotlightfromCursor){
-            double xpos,ypos;
+        if (SpotlightfromCursor) {
+            double xpos, ypos;
             glfwGetCursorPos(m_GLFWHandle.window(), &xpos, &ypos);
-            spotLigthDirection = glm::vec3(float((xpos-m_nWindowWidth/2)/m_nWindowWidth),float(-(ypos-m_nWindowHeight/2)/m_nWindowHeight),-1);
-        } else {
-            spotLigthDirection = glm::vec3(0,0,-1);
+            spotLigthDirection = glm::vec3(float((xpos - m_nWindowWidth / 2) / m_nWindowWidth), float(-(ypos - m_nWindowHeight / 2) / m_nWindowHeight), -1);
         }
-        setVec3(glslProgram,"spotligth.LightPosition",camPos);
-        setVec3(glslProgram,"spotligth.LightIntensity",spotligthIntensity);
-        setVec3(glslProgram,"spotligth.LightDirection",spotLigthDirection);
-        setFloat(glslProgram,"spotligth.CutOff",glm::cos(glm::radians(spotligthCutOff)));
-        setFloat(glslProgram,"spotligth.OuterCutOff",glm::cos(glm::radians(spotligthOuterCutOff)));
-        setFloat(glslProgram,"spotligth.DistAttenuation",spotligthtDistAttenuation);
+        else {
+            spotLigthDirection = glm::vec3(0, 0, -1);
+        }
+        setVec3(glslProgram, "spotligth.LightPosition", camPos);
+        setVec3(glslProgram, "spotligth.LightIntensity", spotligthIntensity);
+        setVec3(glslProgram, "spotligth.LightDirection", spotLigthDirection);
+        setFloat(glslProgram, "spotligth.CutOff", glm::cos(glm::radians(spotligthCutOff)));
+        setFloat(glslProgram, "spotligth.OuterCutOff", glm::cos(glm::radians(spotligthOuterCutOff)));
+        setFloat(glslProgram, "spotligth.DistAttenuation", spotligthtDistAttenuation);
 
         glslCube.use();
         glBindVertexArray(vaocube);
 
         glUniformMatrix4fv(uVMatrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
         glUniformMatrix4fv(uPMatrix, 1, GL_FALSE, glm::value_ptr(projMatrix));
-        for(unsigned int i =0 ; i<NbCube ; i++){
+        for (unsigned int i = 0; i < NbCube; i++) {
             glUniform3fv(uPosCube, 1, glm::value_ptr(posCube[i]));
             glUniform3fv(uColor, 1, glm::value_ptr(CubeColor[i]));
-            glUniform1f(uSize_cube,sizeCube[i] );
+            glUniform1f(uSize_cube,sizeCube[i]);
             glDrawArrays(GL_TRIANGLES, 0, count_vertex);
         }
         glBindVertexArray(0);
-
-
-
-
 
         // The recursive function that should draw a node
         // We use a std::function because a simple lambda cannot be recursive
@@ -604,7 +578,6 @@ int ViewerApplication::run() {
                 }
             }
             // Draw children
-
             for (auto nodeChild : node.children) {
                 drawNode(nodeChild, modelMatrix);
             }
@@ -612,7 +585,7 @@ int ViewerApplication::run() {
         // Draw the scene referenced by gltf file
         glslProgram.use();
         if (model.defaultScene >= 0) {
-        // TODO Draw all nodes
+            // TODO Draw all nodes
             for (const auto nodeIdx : model.scenes[model.defaultScene].nodes) {
                 drawNode(nodeIdx, glm::mat4(1));
             }
@@ -620,15 +593,10 @@ int ViewerApplication::run() {
     };
 
     //TODO Render to image
-
-
-
-
     if (!(m_OutputPath.empty())) {
         const auto nbComponent = 3;
         std::vector<unsigned char> pixels(m_nWindowWidth * m_nWindowHeight * nbComponent);
         renderToImage(m_nWindowWidth, m_nWindowHeight, nbComponent, pixels.data(), [&]() {
-            // drawScene(cameraController.getCamera());
             drawScene(cameraController->getCamera());
         });
         flipImageYAxis(m_nWindowWidth, m_nWindowHeight, nbComponent, pixels.data());
@@ -644,10 +612,9 @@ int ViewerApplication::run() {
     for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount) {
 
         glfwGetFramebufferSize(m_GLFWHandle.window(), &m_nWindowWidth, &m_nWindowHeight);
-        projMatrix = glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight, 0.001f * maxDistance, 1000.0f/*1.5f * maxDistance*/);
+        projMatrix = glm::perspective(70.f, float(m_nWindowWidth) / m_nWindowHeight, 0.001f * maxDistance, 1000.0f);
 
         const auto seconds = glfwGetTime();
-        // const auto camera = cameraController.getCamera();
         const auto camera = cameraController->getCamera();
         drawScene(camera);
 
@@ -676,7 +643,6 @@ int ViewerApplication::run() {
                 static int cameraControllerType = 0;
                 const auto cameraControllerTypeChanged = ImGui::RadioButton("Trackball", &cameraControllerType, 0) || ImGui::RadioButton("First Person", &cameraControllerType, 1);
                 if (cameraControllerTypeChanged) {
-
                     if (cameraControllerType == 0) { // Trackball
                         cameraController = std::make_unique<TrackballCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
                         const auto center = 0.5f * (bboxMax + bboxMin);
@@ -695,9 +661,10 @@ int ViewerApplication::run() {
                 }
             }
             if (currentcam == 0) {
-              ImGui::Text("Current cam : Trackball");
-            } else if (currentcam == 1) {
-              ImGui::Text("Current cam : FPS");
+                ImGui::Text("Current cam : Trackball");
+            }
+            else if (currentcam == 1) {
+                ImGui::Text("Current cam : FPS");
             }
             //
             if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -716,47 +683,49 @@ int ViewerApplication::run() {
                 static std::vector<glm::vec3> CubeNewColor= CubeColor;
                 static std::vector<glm::vec3>  CubePose = posCube;
                 static float lightIntensityFactor;
-                static std::vector<float> LigthCubeIntensity(NbCube,1.f);
+                static std::vector<float> LigthCubeIntensity(NbCube, 1.f);
                 static float maxIntensity = 100.0f;
                 static float cubeposefactor = 20;
 
-
-                if (ImGui::ColorEdit3("Color Directional ligth", (float *)&lightColor) || ImGui::InputFloat("Intensity Directional ligth", &lightIntensityFactor)) {
+                 if (ImGui::ColorEdit3("Color Directional ligth", (float *)&lightColor)) {
+                     lightIntensity = lightColor * lightIntensityFactor;
+                 }
+                if (ImGui::SliderFloat("Intensity", &lightIntensityFactor,0, maxIntensity)) {
                     lightIntensity = lightColor * lightIntensityFactor;
-                }
-                if (ImGui::SliderFloat("intensity Directional ligth slider", &lightIntensityFactor,0, maxIntensity)) {
-                    lightIntensity = lightColor * lightIntensityFactor;
+                    prelightIntensity = lightIntensity;
                 }
                 // Ajout d'une boîte à cocher
-                ImGui::Checkbox("light from camera", &lightFromCamera);
-                ImGui::TextColored(ImVec4(1,1,0,1), "Cube");
+                ImGui::Checkbox("Light from camera", &lightFromCamera);
+                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Cube");
                 static int cubetochange = 0;
-                ImGui::TextColored(ImVec4(1,1,0,1), "Choose Cube");
-                //ImGui::BeginChild("");
-                for (int i = 0; i < NbCube; i++){
-                        std::string s = std::to_string(i+1);
-                        char strcube[10] = "cube n°";
-                        //char const *pchar =
-                        strcat_s(strcube,sizeof strcube, s.c_str());
-                        ImGui::RadioButton(strcube , &cubetochange, i);
+                ImGui::TextColored(ImVec4(1, 1, 1, 1), "Choose Cube : ");
+                for (int i = 0; i < NbCube; i++) {
+                    std::string s = std::to_string(i+1);
+                    char strcube[10] = "cube n°";
+                    //strcat_s(strcube, sizeof strcube, s.c_str());
+                    strcat(strcube, s.c_str());
+                    ImGui::RadioButton(strcube, &cubetochange, i);
                 }
-                //ImGui::EndChild();
 
-                if (ImGui::ColorEdit3("Color cube", (float *)&CubeNewColor[cubetochange]) ) {
+                if (ImGui::ColorEdit3("Color cube", (float *)&CubeNewColor[cubetochange])) {
                     CubeIntensity[cubetochange] = CubeNewColor[cubetochange] * LigthCubeIntensity[cubetochange];
-                    CubeColor[cubetochange] = CubeNewColor[cubetochange]*glm::vec3(LigthCubeIntensity[cubetochange]/(maxIntensity*0.5f));
-                    //std::cout << CubeNewColor << std::endl;
+                    CubeColor[cubetochange] = CubeNewColor[cubetochange] * glm::vec3(LigthCubeIntensity[cubetochange] / (maxIntensity * 0.5f));
+                    precCubeIntensity[cubetochange] = CubeIntensity[cubetochange];
+                    preCubeColor[cubetochange] = CubeColor[cubetochange];
                 }
-                if ( ImGui::SliderFloat("Cube intensity", &LigthCubeIntensity[cubetochange],0, maxIntensity)) {
+                if ( ImGui::SliderFloat("Cube intensity", &LigthCubeIntensity[cubetochange], 0, maxIntensity)) {
                     CubeIntensity[cubetochange] = CubeNewColor[cubetochange] * LigthCubeIntensity[cubetochange];
-                    CubeColor[cubetochange] =  CubeNewColor[cubetochange] *glm::vec3(LigthCubeIntensity[cubetochange]/(maxIntensity*0.2f));
+                    CubeColor[cubetochange] = CubeNewColor[cubetochange] * glm::vec3(LigthCubeIntensity[cubetochange] / (maxIntensity * 0.2f));
+                    precCubeIntensity[cubetochange] = CubeIntensity[cubetochange];
+                    preCubeColor[cubetochange] = CubeColor[cubetochange];
                 }
-                if (ImGui::SliderFloat("X_pos", &CubePose[cubetochange][0], -cubeposefactor*bboxMax[0], cubeposefactor*bboxMax[0] ) || ImGui::SliderFloat("Y_pos", &CubePose[cubetochange][1], -cubeposefactor*bboxMax[1], cubeposefactor*bboxMax[1])
+                if (ImGui::SliderFloat("X_pos", &CubePose[cubetochange][0], -cubeposefactor*bboxMax[0], cubeposefactor*bboxMax[0]) || ImGui::SliderFloat("Y_pos", &CubePose[cubetochange][1], -cubeposefactor*bboxMax[1], cubeposefactor*bboxMax[1])
                                         || ImGui::SliderFloat("Z_pos", &CubePose[cubetochange][2], -cubeposefactor*bboxMax[2], cubeposefactor*bboxMax[2])) {
-                                            posCube[cubetochange] = CubePose[cubetochange];
+                    posCube[cubetochange] = CubePose[cubetochange];
                 }
 
-                ImGui::TextColored(ImVec4(1,1,0,1), "Spotligth");
+
+                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Spotligth");
 
                 static float NewspotligthCutOff = spotligthCutOff;
                 static float NewspotligthOuterCutOff = spotligthOuterCutOff;
@@ -764,45 +733,59 @@ int ViewerApplication::run() {
                 static float NewspotligthtDistAttenuation = spotligthtDistAttenuation;
                 static glm::vec3 spotlightColor = spotligthIntensity;
                 static float SpotlightIntensityFactor;
-                if (ImGui::ColorEdit3("Color SpotLight", (float *)&spotlightColor) || ImGui::SliderFloat("Intensity spotligth", &SpotlightIntensityFactor,0, maxIntensity)) {
+                if (ImGui::ColorEdit3("Color SpotLight", (float *)&spotlightColor) || ImGui::SliderFloat("Intensity spotligth", &SpotlightIntensityFactor, 0, maxIntensity)) {
                     spotligthIntensity = spotlightColor * SpotlightIntensityFactor;
+                    precSpotligthIntensity = spotligthIntensity;
                 }
-                if (ImGui::SliderFloat("Dist CuteOff", &NewspotligthCutOff,0.f, 180.f)) {
+                if (ImGui::SliderFloat("Dist CuteOff", &NewspotligthCutOff, 0.f, 180.f)) {
                     spotligthCutOff = NewspotligthCutOff;
                 }
-                if (ImGui::SliderFloat("Dist OuterCuteOff", &NewspotligthOuterCutOff,0.f, 180.f)) {
+                if (ImGui::SliderFloat("Dist OuterCuteOff", &NewspotligthOuterCutOff, 0.f, 180.f)) {
                     spotligthOuterCutOff = NewspotligthOuterCutOff;
                 }
-                if (ImGui::SliderFloat("Both CuteOff & Outer", &BothCutoffandOuter,0.f, 180.f)) {
+                if (ImGui::SliderFloat("Both CuteOff & Outer", &BothCutoffandOuter, 0.f, 180.f)) {
                     spotligthCutOff = BothCutoffandOuter;
-                    spotligthOuterCutOff = BothCutoffandOuter*1.1f;
+                    spotligthOuterCutOff = BothCutoffandOuter * 1.1f;
                     NewspotligthCutOff = spotligthCutOff;
                     NewspotligthOuterCutOff = spotligthOuterCutOff;
                 }
-                if (ImGui::SliderFloat("Dist attenuation spotligth", &NewspotligthtDistAttenuation,0, 150)) {
+                if (ImGui::SliderFloat("Dist attenuation spotligth", &NewspotligthtDistAttenuation, 0, 150)) {
                     spotligthtDistAttenuation = NewspotligthtDistAttenuation;
                 }
 
-                if(ImGui::Button("Spot light from Cursor / centered Spot light")){
-                        SpotlightfromCursor = !SpotlightfromCursor;
+                if (ImGui::Button("Spot light from Cursor / centered Spot light")) {
+                    SpotlightfromCursor = !SpotlightfromCursor;
                 }
 
-                ImGui::TextColored(ImVec4(1,1,0,1), "Switch Off all");
-                if(ImGui::Button("Off")){
-                    glm::vec3 off(0,0,0);
+                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Switch Off/On all : ");
+
+                ImGui::SameLine();
+                auto buttonOff = ImGui::Button("Off");
+                ImGui::SameLine();
+                auto buttonOn = ImGui::Button("On");
+
+                if (buttonOff) {
+                    glm::vec3 off(0, 0, 0);
+                    precSpotligthIntensity = spotligthIntensity;
                     spotligthIntensity = off;
-                    for(auto i=  0;i<NbCube ; i++){
+                    for (auto i = 0; i < NbCube; i++) {
+                        precCubeIntensity[i] = CubeIntensity[i];
+                        preCubeColor[i] = CubeColor[i];
                         CubeIntensity[i] = off;
                         CubeColor[i] = off;
                     }
+                    prelightIntensity = lightIntensity;
                     lightIntensity = off;
-                };
-
-
-
-
+                }
+                else if (buttonOn){
+                    for (auto i = 0; i < NbCube; i++) {
+                        CubeIntensity[i] = precCubeIntensity[i];
+                        CubeColor[i] = preCubeColor[i];
+                    }
+                    spotligthIntensity = precSpotligthIntensity;
+                    lightIntensity = prelightIntensity;
+                }
             }
-            //
             ImGui::End();
         }
         imguiRenderFrame();
@@ -810,7 +793,6 @@ int ViewerApplication::run() {
         auto ellapsedTime = glfwGetTime() - seconds;
         auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
         if (!guiHasFocus) {
-            // cameraController.update(float(ellapsedTime));
             cameraController->update(float(ellapsedTime));
         }
         m_GLFWHandle.swapBuffers(); // Swap front and back buffers
@@ -818,10 +800,9 @@ int ViewerApplication::run() {
     // TODO clean up allocated GL data
     glDeleteBuffers(1, &vbocube);
     glDeleteVertexArrays(1, &vaocube);
-    for(auto &it : textureObjects){glDeleteTextures(1,&it);}
-    for(auto &it : bufferObjects){glDeleteBuffers(1,&it);}
-    for(auto &it : vertexArrayObjects){glDeleteVertexArrays(1,&it);}
-
+    for (auto &it : textureObjects) {glDeleteTextures(1, &it);}
+    for (auto &it : bufferObjects) {glDeleteBuffers(1, &it);}
+    for (auto &it : vertexArrayObjects) {glDeleteVertexArrays(1, &it);}
     return 0;
 }
 

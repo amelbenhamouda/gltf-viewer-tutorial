@@ -43,8 +43,6 @@ class ViewerApplication {
         fs::path m_gltfFilePath;
         std::string m_vertexShader = "forward.vs.glsl";
         std::string m_vertexShader_cube = "shad3Dcube.vs.glsl";
-        // std::string m_fragmentShader = "normals.fs.glsl";
-        // std::string m_fragmentShader = "diffuse_directional_light.fs.glsl";
         std::string m_fragmentShader = "pbr_directional_light.fs.glsl";
         std::string m_fragmentShader_cube = "shad3Dcube.fs.glsl";
 
