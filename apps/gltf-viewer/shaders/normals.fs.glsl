@@ -6,7 +6,8 @@ in vec2 vTexCoords;
 
 out vec3 fColor;
 
-void main() {
+void main()
+{
    // Need another normalization because interpolation of vertex attributes does not maintain unit length
    vec3 viewSpaceNormal = normalize(vViewSpaceNormal);
    fColor = viewSpaceNormal;

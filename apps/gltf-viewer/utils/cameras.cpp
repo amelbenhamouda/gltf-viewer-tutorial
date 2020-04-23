@@ -1,5 +1,6 @@
 #include "cameras.hpp"
 #include "glfw.hpp"
+
 #include <iostream>
 
 // Good reference here to map camera movements to lookAt calls
@@ -45,13 +46,15 @@ bool FirstPersonCameraController::update(float elapsedTime) {
     float dollyIn = 0.f;
     float rollRightAngle = 0.f;
 
-    // add speed up with Ctrl
-    if (glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL)) {
-        increaseSpeed(m_fSpeed*4.f);
-    } 
-    else {
-        m_fSpeed = default_speed;
-    }
+
+ // add speed up with Ctrl
+  if (glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL)) {
+    increaseSpeed(m_fSpeed*4.f);
+  } else {
+    m_fSpeed = default_speed;
+  }
+
+
 
     if (glfwGetKey(m_pWindow, GLFW_KEY_W)) {
         dollyIn += m_fSpeed * elapsedTime;
@@ -141,6 +144,7 @@ bool TrackballCameraController::update(float elapsedTime) {
         // TODO implement pan
         // Mouvement uniquement sur les axes x et y de la caméra, pas de déplacement sur z
         m_camera.moveLocal(truckLeft, pedestalUp, 0.f);
+
         return true;
     }
 
@@ -166,6 +170,7 @@ bool TrackballCameraController::update(float elapsedTime) {
         // Mise à jour de la caméra avec une nouvelle position des yeux
         const auto newEye = m_camera.eye() + translationVector;
         m_camera = Camera(newEye, m_camera.center(), m_worldUpAxis);
+
         return true;
     }
 

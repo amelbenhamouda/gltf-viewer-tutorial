@@ -17,7 +17,7 @@ class Camera {
             m_up = normalize(cross(front, left));
         };
 
-        glm::mat4 getViewMatrix() const {return glm::lookAt(m_eye, m_center, m_up);}
+        glm::mat4 getViewMatrix() const { return glm::lookAt(m_eye, m_center, m_up); }
 
         // Move the camera along its left axis.
         void truckLeft(float offset) {
@@ -96,11 +96,11 @@ class Camera {
             m_up = glm::vec3(rotationMatrix * glm::vec4(m_up, 0));
         }
 
-        const glm::vec3 eye() const {return m_eye;}
+        const glm::vec3 eye() const { return m_eye; }
 
-        const glm::vec3 center() const {return m_center;}
+        const glm::vec3 center() const { return m_center; }
 
-        const glm::vec3 up() const {return m_up;}
+        const glm::vec3 up() const { return m_up; }
 
         const glm::vec3 front(bool normalize = true) const {
             const auto f = m_center - m_eye;
@@ -144,18 +144,18 @@ class FirstPersonCameraController : public CameraController {
             m_fSpeed = glm::max(m_fSpeed, 0.f);
         }
 
-        const glm::vec3 &getWorldUpAxis() const {return m_worldUpAxis;}
+        const glm::vec3 &getWorldUpAxis() const { return m_worldUpAxis; }
 
-        void setWorldUpAxis(const glm::vec3 &worldUpAxis) {m_worldUpAxis = worldUpAxis;}
+        void setWorldUpAxis(const glm::vec3 &worldUpAxis) { m_worldUpAxis = worldUpAxis; }
 
         // Update the view matrix based on input events and elapsed time
         // Return true if the view matrix has been modified
         bool update(float elapsedTime);
 
         // Get the view matrix
-        const Camera &getCamera() const {return m_camera;}
+        const Camera &getCamera() const { return m_camera; }
 
-        void setCamera(const Camera &camera) {m_camera = camera;}
+        void setCamera(const Camera &camera) { m_camera = camera; }
 
     private:
         GLFWwindow *m_pWindow = nullptr;
@@ -178,27 +178,27 @@ class TrackballCameraController : public CameraController {
         m_pWindow(window), m_fSpeed(speed), m_worldUpAxis(worldUpAxis), m_camera{glm::vec3(0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)} {}
 
         // Controller attributes, if put in a GUI, should be adapted
-        void setSpeed(float speed) {m_fSpeed = speed;}
+        void setSpeed(float speed) { m_fSpeed = speed; }
 
-        float getSpeed() const {return m_fSpeed;}
+        float getSpeed() const { return m_fSpeed; }
 
         void increaseSpeed(float delta) {
             m_fSpeed += delta;
             m_fSpeed = glm::max(m_fSpeed, 0.f);
         }
 
-        const glm::vec3 &getWorldUpAxis() const {return m_worldUpAxis;}
+        const glm::vec3 &getWorldUpAxis() const { return m_worldUpAxis; }
 
-        void setWorldUpAxis(const glm::vec3 &worldUpAxis) {m_worldUpAxis = worldUpAxis;}
+        void setWorldUpAxis(const glm::vec3 &worldUpAxis) { m_worldUpAxis = worldUpAxis; }
 
         // Update the view matrix based on input events and elapsed time
         // Return true if the view matrix has been modified
         bool update(float elapsedTime);
 
         // Get the view matrix
-        const Camera &getCamera() const {return m_camera;}
+        const Camera &getCamera() const { return m_camera; }
 
-        void setCamera(const Camera &camera) {m_camera = camera;}
+        void setCamera(const Camera &camera) { m_camera = camera; }
 
     private:
         GLFWwindow *m_pWindow = nullptr;
