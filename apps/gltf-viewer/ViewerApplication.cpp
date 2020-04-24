@@ -279,6 +279,7 @@ std::vector<glm::vec4> computeTangent(const tinygltf::Model &model) {
                                 alltangent.push_back(tangent);
                                 alltangent.push_back(tangent);
                             }
+
                             nbpos += 1;
                         }
                     }
@@ -670,7 +671,7 @@ int ViewerApplication::run() {
 
     ///Normal map
     float ActiveNormalMap = 1;
-    bool normaltexturecheck = 1;
+    bool normaltexturecheck = 0;
 
     // Setup OpenGL state for rendering
     glEnable(GL_DEPTH_TEST);
@@ -712,10 +713,10 @@ int ViewerApplication::run() {
                         textureNormal = textureObjects[texture.source];
                     }
                     glUniform1f(uNormalScale,normalTexture.scale);
-                } 
+                    normaltexturecheck = 1;
+                }
                 else {
-                    glUniform1f(uActiveNormal,0); // si il n'y a pas de normaltexture spécifié pour le fichier gltf
-                    normaltexturecheck = 0;
+                    normaltexturecheck = normaltexturecheck | 0; // condition OR logique
                 }
                 glActiveTexture(GL_TEXTURE3);
                 glBindTexture(GL_TEXTURE_2D, textureNormal);
@@ -806,7 +807,10 @@ int ViewerApplication::run() {
 
         const auto viewMatrix = camera.getViewMatrix();
         //Activation ou Non de la normal map
-        glUniform1f(uActiveNormal,ActiveNormalMap);
+
+//        ActiveNormalMap = 0.f;
+//        glUniform1f(uActiveNormal,0); // si il n'y a pas de normaltexture spécifié pour le fichier gltf
+//        glUniform1f(uActiveNormal,ActiveNormalMap);
         // Envoie lightIntensity au shader
         if (uLightDirectionLocation >= 0) {
             if (lightFromCamera) {  // Si lumiere camera cocher
@@ -890,6 +894,11 @@ int ViewerApplication::run() {
                     const auto &primitive = mesh.primitives[i];
 
                     bindMaterial(primitive.material);
+                    if(normaltexturecheck==0){
+                        glUniform1f(uActiveNormal,0); // si il n'y a pas de normaltexture spécifié pour le fichier gltf
+                    } else {
+                        glUniform1f(uActiveNormal,1.0f*ActiveNormalMap);
+                    }
 
                     glBindVertexArray(vao);
 
@@ -972,7 +981,7 @@ int ViewerApplication::run() {
                 static int cameraControllerType = 0;
                 const auto cameraControllerTypeChanged = ImGui::RadioButton("Trackball", &cameraControllerType, 0) || ImGui::RadioButton("First Person", &cameraControllerType, 1);
                 if (cameraControllerTypeChanged) {
-                    if (cameraControllerType == 0) {  // Trackball 
+                    if (cameraControllerType == 0) {  // Trackball
                         cameraController = std::make_unique<TrackballCameraController>(m_GLFWHandle.window(), 0.5f * maxDistance);
                         const auto center = 0.5f * (bboxMax + bboxMin);
                         const auto up = glm::vec3(0, 1, 0);
@@ -995,7 +1004,7 @@ int ViewerApplication::run() {
             else if (currentcam == 1) {
                 ImGui::Text("Current cam : FPS");
             }
-            
+
             if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
                 static float lightTheta = 0.f;
                 static float lightPhi = 0.f;
@@ -1044,7 +1053,7 @@ int ViewerApplication::run() {
                 }
                 if (ImGui::SliderFloat("Cube intensity", &LigthCubeIntensity[cubetochange], 0, maxIntensity)) {
                     CubeIntensity[cubetochange] = CubeNewColor[cubetochange] * LigthCubeIntensity[cubetochange];
-                    CubeColor[cubetochange] = CubeNewColor[cubetochange] * glm::vec3(LigthCubeIntensity[cubetochange] / (maxIntensity * 0.2f));
+                    CubeColor[cubetochange] = CubeNewColor[cubetochange] * LigthCubeIntensity[cubetochange] / (maxIntensity*0.5f );
                     precCubeIntensity[cubetochange] = CubeIntensity[cubetochange];
                     preCubeColor[cubetochange] = CubeColor[cubetochange];
                 }
@@ -1127,7 +1136,7 @@ int ViewerApplication::run() {
                     else if (NormalOn) {
                         ActiveNormalMap = 1.f;
                     }
-                } 
+                }
                 else {
                     ImGui::TextColored(ImVec4(1, 0, 0, 1), "No normalTexture in the gltf file ");
                 }
@@ -1158,7 +1167,7 @@ int ViewerApplication::run() {
     return 0;
 }
 
-ViewerApplication::ViewerApplication(const fs::path &appPath, uint32_t width, uint32_t height, const fs::path &gltfFile, const std::vector<float> &lookatArgs, const std::string &vertexShader, const std::string &fragmentShader, const fs::path &output) 
+ViewerApplication::ViewerApplication(const fs::path &appPath, uint32_t width, uint32_t height, const fs::path &gltfFile, const std::vector<float> &lookatArgs, const std::string &vertexShader, const std::string &fragmentShader, const fs::path &output)
 		: m_nWindowWidth(width), m_nWindowHeight(height), m_AppPath{appPath}, m_AppName{m_AppPath.stem().string()}, m_ImGuiIniFilename{m_AppName + ".imgui.ini"}, m_ShadersRootPath{m_AppPath.parent_path() / "shaders"}, m_gltfFilePath{gltfFile}, m_OutputPath{output} {
     if (!lookatArgs.empty()) {
         m_hasUserCamera = true;

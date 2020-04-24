@@ -81,7 +81,8 @@ vec3 getNormal(){
         vec4 baseNormalFromTexture = texture(uNormalTexture, vTexCoords);
         vec3 normalTexture = uNormalScale*baseNormalFromTexture.rgb;
         N = normalize(normalTexture * 2.0 - 1.0);
-        N = N * vec3(1,-1,1); //
+        //Spécifié dans le readme de NormalTangentTest que la composante Y(g) doit être multiplié par -1
+        N = N * vec3(1,-1,1);
     } else{
         N = normalize(vViewSpaceNormal);
     }
@@ -90,9 +91,7 @@ vec3 getNormal(){
 
 vec3 directional(){
 
-
     vec3 N = getNormal();
-
     vec3 L = vec3(0,0,0);
     vec3 V = vec3(0,0,0);
 
@@ -103,7 +102,6 @@ vec3 directional(){
        	L = uLightDirection;
         V = normalize(-vViewSpacePosition);
     }
-
 
 	vec3 H = normalize(L + V);
 	vec4 baseColorFromTexture = SRGBtoLINEAR(texture(uBaseColorTexture, vTexCoords));
@@ -266,15 +264,6 @@ void main() {
 	for(int i=0; i<NB_PONC_LIGHTS; i++){
         result += ponctual(pointLights[i]);
 	}
-    //float theta = dot(lightDir, normalize(-light.direction));
-    //float epsilon = light.cutOff - light.outerCutOff;
-    //float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
-   // vec3 lightDir = normalize(spotligth.LightPosition - vViewSpacePosition);
-   // float theta = dot(lightDir, normalize(spotligth.LightDirection ));
-   // if (theta > cos(radians(spotligth.CuteOff))) {
-   //     result += spotligthCalc(spotligth,lightDir);
-    //}
-	// fColor = LINEARtoSRGB(diffuse * uLightIntensity);
 	result += spotligthCalc(spotligth);
 	fColor = clamp(result + emissive,0,1);
 }
