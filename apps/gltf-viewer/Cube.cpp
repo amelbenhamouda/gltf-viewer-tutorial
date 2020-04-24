@@ -10,7 +10,6 @@ namespace glimac {
 ///Construit dans l'ordre face - dos - droite -gauche - haut - bas
 
     void Cube::build(GLfloat size_c) {
-
         std::vector<ShapeVertex> data;
         // Construit l'ensemble des vertex
 

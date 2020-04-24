@@ -5,15 +5,12 @@
 #include "utils/filesystem.hpp"
 #include "utils/shaders.hpp"
 #include "Cube.hpp"
-
 #include <tiny_gltf.h> // TODO Loading the glTF file
 
 class ViewerApplication {
     public:
-        ViewerApplication(const fs::path &appPath, uint32_t width, uint32_t height,
-          const fs::path &gltfFile, const std::vector<float> &lookatArgs,
-          const std::string &vertexShader, const std::string &fragmentShader,
-          const fs::path &output);
+        ViewerApplication(const fs::path &appPath, uint32_t width, uint32_t height, const fs::path &gltfFile, const std::vector<float> &lookatArgs,
+                          const std::string &vertexShader, const std::string &fragmentShader, const fs::path &output);
 
         int run();
 
