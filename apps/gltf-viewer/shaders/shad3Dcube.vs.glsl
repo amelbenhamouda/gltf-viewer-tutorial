@@ -5,18 +5,16 @@ layout(location = 0) in vec3 aVertexPosition; // Position du sommet
 layout(location = 1) in vec3 aVertexNormal; // Normale du sommet
 layout(location = 2) in vec2 aVertexTexCoords; // Coordonnées de texture du sommet
 
-
 uniform float uSize_cube;
 uniform mat4 uVMatrix;
 uniform vec3 uPosCube;
 uniform mat4 uPMatrix;
 
-
-mat4 translate(vec3 txyz){
+mat4 translate(vec3 txyz) {
     return mat4(vec4(1, 0, 0, 0), vec4(0, 1, 0, 0), vec4(0, 0, 1, 0), vec4(txyz[0], txyz[1], txyz[2], 1));
 }
 
-mat4 scale(float sx, float sy, float sz){
+mat4 scale(float sx, float sy, float sz) {
     return mat4(vec4(sx, 0, 0, 0), vec4(0, sy, 0, 0), vec4(0, 0, sz, 0), vec4(0, 0, 0, 1));
 }
 

@@ -165,7 +165,6 @@ std::vector<GLuint> ViewerApplication::createVertexArrayObjects(const tinygltf::
     return vertexArrayObjects;
 }
 
-
 std::vector<glm::vec4> computeTangent(const tinygltf::Model &model) {
     int nbpos = 0;
     auto posloc = std::vector<glm::vec3>(3, glm::vec3(0, 0, 0));
@@ -264,7 +263,7 @@ std::vector<glm::vec4> computeTangent(const tinygltf::Model &model) {
                             texloc[2] = texloc[1];
                             texloc[1] = texloc[0];
                             texloc[0] = texCoord;
-                            if((nbpos + 1) % 3 == 0) {
+                            if ((nbpos + 1) % 3 == 0) {
                                 glm::vec3 edge1 = posloc[1] - posloc[0];
                                 glm::vec3 edge2 = posloc[2] - posloc[0];
                                 glm::vec2 deltaUV1 = texloc[1] - texloc[0];
@@ -279,7 +278,6 @@ std::vector<glm::vec4> computeTangent(const tinygltf::Model &model) {
                                 alltangent.push_back(tangent);
                                 alltangent.push_back(tangent);
                             }
-
                             nbpos += 1;
                         }
                     }
@@ -295,7 +293,7 @@ std::vector<glm::vec4> computeTangent(const tinygltf::Model &model) {
                             texloc[2] = texloc[1];
                             texloc[1] = texloc[0];
                             texloc[0] = texCoord;
-                            if((nbpos + 1) % 3 == 0) {
+                            if ((nbpos + 1) % 3 == 0) {
                                 glm::vec3 edge1 = posloc[1] - posloc[0];
                                 glm::vec3 edge2 = posloc[2] - posloc[0];
                                 glm::vec2 deltaUV1 = texloc[1] - texloc[0];
@@ -894,10 +892,11 @@ int ViewerApplication::run() {
                     const auto &primitive = mesh.primitives[i];
 
                     bindMaterial(primitive.material);
-                    if(normaltexturecheck==0){
-                        glUniform1f(uActiveNormal,0); // si il n'y a pas de normaltexture spécifié pour le fichier gltf
-                    } else {
-                        glUniform1f(uActiveNormal,1.0f*ActiveNormalMap);
+                    if (normaltexturecheck == 0) {
+                        glUniform1f(uActiveNormal, 0); // si il n'y a pas de normaltexture spécifié pour le fichier gltf
+                    } 
+                    else {
+                        glUniform1f(uActiveNormal, 1.0f * ActiveNormalMap);
                     }
 
                     glBindVertexArray(vao);

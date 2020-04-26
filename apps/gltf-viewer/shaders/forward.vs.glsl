@@ -14,15 +14,14 @@ uniform mat4 uModelViewProjMatrix;
 uniform mat4 uModelViewMatrix;
 uniform mat4 uNormalMatrix;
 
-void main()
-{
+void main() {
     vViewSpacePosition = vec3(uModelViewMatrix * vec4(aPosition, 1));
 	vViewSpaceNormal = normalize(vec3(uNormalMatrix * vec4(aNormal, 0)));
 
     vec4 vViewSpaceTangent = normalize(uNormalMatrix * aTangent);
-    vViewSpaceTangent =  normalize(vViewSpaceTangent-dot(vViewSpaceTangent,vec4(vViewSpaceNormal,0))*vec4(vViewSpaceNormal,0));
-    vec3 B = cross(vViewSpaceNormal,vViewSpaceTangent.xyz)*vViewSpaceTangent.w;
-    TBN = transpose(mat3(vViewSpaceTangent.xyz,B,vViewSpaceNormal)); // TBN inverse matrix
+    vViewSpaceTangent =  normalize(vViewSpaceTangent - dot(vViewSpaceTangent, vec4(vViewSpaceNormal, 0)) * vec4(vViewSpaceNormal, 0));
+    vec3 B = cross(vViewSpaceNormal, vViewSpaceTangent.xyz) * vViewSpaceTangent.w;
+    TBN = transpose(mat3(vViewSpaceTangent.xyz, B, vViewSpaceNormal)); // TBN inverse matrix
 	vTexCoords = aTexCoords;
     gl_Position =  uModelViewProjMatrix * vec4(aPosition, 1);
 }
