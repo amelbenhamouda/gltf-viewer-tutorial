@@ -74,7 +74,7 @@ vec3 getNormal() {
         N = normalize(normalTexture * 2.0 - 1.0);
         //Spécifié dans le readme de NormalTangentTest que la composante Y(g) doit être multiplié par -1
         N = N * vec3(1, -1, 1);
-    } 
+    }
     else {
         N = normalize(vViewSpaceNormal);
     }
@@ -89,7 +89,7 @@ vec3 directional() {
     if (uActiveNormal > 0.5) {
         L = TBN * uLightDirection;
         V = TBN * normalize(-vViewSpacePosition);
-    } 
+    }
     else {
        	L = uLightDirection;
         V = normalize(-vViewSpacePosition);
@@ -135,7 +135,7 @@ vec3 ponctual(PoncLigth ligth) {
     if (uActiveNormal > 0.5) {
         L = TBN * normalize(ligth.LightPosition - vViewSpacePosition);
         V = TBN * normalize(-vViewSpacePosition);
-    } 
+    }
     else {
         L = normalize(ligth.LightPosition - vViewSpacePosition);
         V = normalize(-vViewSpacePosition);
@@ -173,30 +173,30 @@ vec3 ponctual(PoncLigth ligth) {
 	float dist = distance(ligth.LightPosition, vViewSpacePosition);
 	float Kc = 1.f, Kl, Kd;
 	if (ligth.CubeDist < 7 && ligth.CubeDist >= 0) {
-        Kl = 0.7f;  
+        Kl = 0.7f;
         Kd = 1.8f;
     }
-    else if (ligth.CubeDist < 13 && ligth.CubeDist >= 7) {  
-        Kl = 0.35f; 
+    else if (ligth.CubeDist < 13 && ligth.CubeDist >= 7) {
+        Kl = 0.35f;
         Kd = 0.44f;
     }
-    else if (ligth.CubeDist < 20 && ligth.CubeDist >= 13) { 
-        Kl = 0.22f;   
+    else if (ligth.CubeDist < 20 && ligth.CubeDist >= 13) {
+        Kl = 0.22f;
         Kd = 0.20f;
     }
-    else if (ligth.CubeDist < 32 && ligth.CubeDist >= 20) { 
-        Kl = 0.14f; 
+    else if (ligth.CubeDist < 32 && ligth.CubeDist >= 20) {
+        Kl = 0.14f;
         Kd = 0.07f;
     }
-    else if (ligth.CubeDist < 50 && ligth.CubeDist >= 32) { 
-        Kl = 0.09f; 
+    else if (ligth.CubeDist < 50 && ligth.CubeDist >= 32) {
+        Kl = 0.09f;
         Kd = 0.032f;
     }
-    else if (ligth.CubeDist < 65 && ligth.CubeDist >=5 0) { 
-        Kl = 0.07f; 
+    else if (ligth.CubeDist < 65 && ligth.CubeDist >=50) {
+        Kl = 0.07f;
         Kd = 0.017f;
     }
-    else {                           
+    else {
         Kl = 0.045f;
         Kd = 0.0075f;
     }
@@ -212,7 +212,7 @@ vec3 spotligthCalc(SpotLigth spotligth) {
     if (uActiveNormal > 0.5) {
         L = normalize(spotligth.LightPosition - vViewSpacePosition);
         V = TBN * normalize(-vViewSpacePosition);
-    } 
+    }
     else {
         L = normalize(spotligth.LightPosition - vViewSpacePosition);
         V = normalize(-vViewSpacePosition);
@@ -249,31 +249,31 @@ vec3 spotligthCalc(SpotLigth spotligth) {
 	vec3 f_diffuse = (1 - F) * diffuse;
 	float dist = length(spotligth.LightPosition - vViewSpacePosition);
 	float Kc = 1.f, Kl, Kd;
-	if (spotligth.DistAttenuation < 7 && spotligth.DistAttenuation >= 0) {       
-        Kl = 0.7f;  
+	if (spotligth.DistAttenuation < 7 && spotligth.DistAttenuation >= 0) {
+        Kl = 0.7f;
         Kd = 1.8f;
     }
-    else if (spotligth.DistAttenuation < 13 && spotligth.DistAttenuation >= 7) {  
-        Kl = 0.35f; 
+    else if (spotligth.DistAttenuation < 13 && spotligth.DistAttenuation >= 7) {
+        Kl = 0.35f;
         Kd = 0.44f;
     }
-    else if (spotligth.DistAttenuation < 20 && spotligth.DistAttenuation >= 13) { 
-        Kl = 0.22f;   
+    else if (spotligth.DistAttenuation < 20 && spotligth.DistAttenuation >= 13) {
+        Kl = 0.22f;
         Kd = 0.20f;
     }
-    else if (spotligth.DistAttenuation < 32 && spotligth.DistAttenuation >= 20) { 
-        Kl = 0.14f; 
+    else if (spotligth.DistAttenuation < 32 && spotligth.DistAttenuation >= 20) {
+        Kl = 0.14f;
         Kd = 0.07f;
     }
-    else if (spotligth.DistAttenuation < 50 && spotligth.DistAttenuation >= 32) { 
-        Kl = 0.09f; 
+    else if (spotligth.DistAttenuation < 50 && spotligth.DistAttenuation >= 32) {
+        Kl = 0.09f;
         Kd = 0.032f;
     }
-    else if (spotligth.DistAttenuation < 65 && spotligth.DistAttenuation >= 50) { 
-        Kl = 0.07f; 
+    else if (spotligth.DistAttenuation < 65 && spotligth.DistAttenuation >= 50) {
+        Kl = 0.07f;
         Kd = 0.017f;
     }
-    else {                           
+    else {
         Kl = 0.045f;
         Kd = 0.0075f;
     }
