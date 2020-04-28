@@ -192,7 +192,7 @@ vec3 ponctual(PoncLigth ligth) {
         Kl = 0.09f;
         Kd = 0.032f;
     }
-    else if (ligth.CubeDist < 65 && ligth.CubeDist >=50) {
+    else if (ligth.CubeDist < 65 && ligth.CubeDist >= 50) {
         Kl = 0.07f;
         Kd = 0.017f;
     }

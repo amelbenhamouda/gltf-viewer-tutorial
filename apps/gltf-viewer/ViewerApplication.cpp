@@ -225,32 +225,32 @@ std::vector<glm::vec4> computeTangent(const tinygltf::Model &model) {
                         auto indexByteStride = indexBufferView.byteStride;
 
                         switch (indexAccessor.componentType) {
-	                        default:
-	                            std::cerr << "Primitive index accessor with bad componentType " << indexAccessor.componentType << ", skipping it." << std::endl;
-	                            continue;
-	                        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
-	                            indexByteStride = indexByteStride ? indexByteStride : sizeof(uint8_t);
-	                            break;
-	                        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
-	                            indexByteStride = indexByteStride ? indexByteStride : sizeof(uint16_t);
-	                            break;
-	                        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
-	                            indexByteStride = indexByteStride ? indexByteStride : sizeof(uint32_t);
-	                            break;
+                            default:
+                                std::cerr << "Primitive index accessor with bad componentType " << indexAccessor.componentType << ", skipping it." << std::endl;
+                                continue;
+                            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+                                indexByteStride = indexByteStride ? indexByteStride : sizeof(uint8_t);
+                                break;
+                            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+                                indexByteStride = indexByteStride ? indexByteStride : sizeof(uint16_t);
+                                break;
+                            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
+                                indexByteStride = indexByteStride ? indexByteStride : sizeof(uint32_t);
+                                break;
                         }
 
                         for (size_t i = 0; i < indexAccessor.count; ++i) {
                             uint32_t index = 0;
                             switch (indexAccessor.componentType) {
-	                            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
-	                                index = *((const uint8_t *)&indexBuffer.data[indexByteOffset + indexByteStride * i]);
-	                                break;
-	                            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
-	                                index = *((const uint16_t *)&indexBuffer.data[indexByteOffset + indexByteStride * i]);
-	                                break;
-	                            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
-	                                index = *((const uint32_t *)&indexBuffer.data[indexByteOffset + indexByteStride * i]);
-	                                break;
+                                case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+                                    index = *((const uint8_t *)&indexBuffer.data[indexByteOffset + indexByteStride * i]);
+                                    break;
+                                case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+                                    index = *((const uint16_t *)&indexBuffer.data[indexByteOffset + indexByteStride * i]);
+                                    break;
+                                case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
+                                    index = *((const uint32_t *)&indexBuffer.data[indexByteOffset + indexByteStride * i]);
+                                    break;
                             }
                             const auto &localPosition = *((const glm::vec3 *)&positionBuffer.data[posbyteOffset + positionByteStride * index]);
                             const auto worldPosition = glm::vec3(modelMatrix * glm::vec4(localPosition, 1.f));
@@ -1167,7 +1167,7 @@ int ViewerApplication::run() {
 }
 
 ViewerApplication::ViewerApplication(const fs::path &appPath, uint32_t width, uint32_t height, const fs::path &gltfFile, const std::vector<float> &lookatArgs, const std::string &vertexShader, const std::string &fragmentShader, const fs::path &output)
-		: m_nWindowWidth(width), m_nWindowHeight(height), m_AppPath{appPath}, m_AppName{m_AppPath.stem().string()}, m_ImGuiIniFilename{m_AppName + ".imgui.ini"}, m_ShadersRootPath{m_AppPath.parent_path() / "shaders"}, m_gltfFilePath{gltfFile}, m_OutputPath{output} {
+        : m_nWindowWidth(width), m_nWindowHeight(height), m_AppPath{appPath}, m_AppName{m_AppPath.stem().string()}, m_ImGuiIniFilename{m_AppName + ".imgui.ini"}, m_ShadersRootPath{m_AppPath.parent_path() / "shaders"}, m_gltfFilePath{gltfFile}, m_OutputPath{output} {
     if (!lookatArgs.empty()) {
         m_hasUserCamera = true;
         m_userCamera = Camera { glm::vec3(lookatArgs[0], lookatArgs[1], lookatArgs[2]), glm::vec3(lookatArgs[3], lookatArgs[4], lookatArgs[5]), glm::vec3(lookatArgs[6], lookatArgs[7], lookatArgs[8])};
